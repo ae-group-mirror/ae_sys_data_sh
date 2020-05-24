@@ -2,8 +2,16 @@
 Sihot system data interface
 ===========================
 
-The low-level classes and methods for to communicate with the Sihot system
-are provided by the :mod:`ae.sys_core_sh` portion of the ae namespace package.
+This portion is very old and needs refactoring and much more unit tests.
+
+The sys record data classes provided by this portion are based on client
+and server components (for to communicate with the Sihot PMS system)
+provided by the :mod:`ae.sys_core_sh` portion of the ae namespace package.
+
+TODO:
+    - split into several small modules.
+    - enhance type annotation.
+    - add much more unit tests.
 
 """
 import datetime
@@ -12,21 +20,24 @@ from traceback import format_exc, print_exc
 from copy import deepcopy
 from textwrap import wrap
 import pprint
-from typing import Union, Tuple, Optional, Any, Dict, List, Sequence
+from typing import Union, Tuple, Optional, Any, Dict, List, Sequence, Iterator
 
-from ae.console import ConsoleApp
-from ae.core import DATE_ISO, DEBUG_LEVEL_ENABLED, full_stack_trace, parse_date
-from ae.sys_data import (ACTION_INSERT, ACTION_UPDATE, ACTION_DELETE, ACTION_SEARCH, ACTION_BUILD,
-                         FAT_IDX, FAD_FROM, FAD_ONTO, LIST_TYPES, ALL_FIELDS, CALLABLE_SUFFIX,
-                         Record, Records, Value, get_current_index, compose_current_index, set_current_index,
-                         field_name_idx_path)
-from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlBuilder,
-                            SXML_DEF_ENCODING, ERR_MESSAGE_PREFIX_CONTINUE, SDI_SH, SDF_SH_KERNEL_PORT, SDF_SH_WEB_PORT,
-                            SDF_SH_CLIENT_PORT, SDF_SH_TIMEOUT, SDF_SH_XML_ENCODING, SDF_SH_USE_KERNEL_FOR_CLIENT,
-                            SDF_SH_USE_KERNEL_FOR_RES, SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
+from ae.core import DATE_ISO, DEBUG_LEVEL_ENABLED, full_stack_trace, parse_date             # type: ignore
+from ae.console import ConsoleApp                                                           # type: ignore
+from ae.sys_data import (                                                                   # type: ignore
+    ACTION_INSERT, ACTION_UPDATE, ACTION_DELETE, ACTION_SEARCH, ACTION_BUILD,
+    FAT_IDX, FAD_FROM, FAD_ONTO, LIST_TYPES, ALL_FIELDS, CALLABLE_SUFFIX,
+    Record, Records, Value, get_current_index, compose_current_index, set_current_index,
+    field_name_idx_path, _Field)
+from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlBuilder,     # type: ignore
+                            SXML_DEF_ENCODING, ERR_MESSAGE_PREFIX_CONTINUE, SDI_SH,
+                            SDF_SH_SERVER_ADDRESS, SDF_SH_KERNEL_PORT, SDF_SH_WEB_PORT,
+                            SDF_SH_CLIENT_PORT, SDF_SH_TIMEOUT, SDF_SH_XML_ENCODING,
+                            SDF_SH_USE_KERNEL_FOR_CLIENT, SDF_SH_USE_KERNEL_FOR_RES,
+                            SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 FORE_SURNAME_SEP = ' '
@@ -428,7 +439,7 @@ def add_sh_options(cae: ConsoleApp, client_port: int = 0,
     :param add_kernel_port:             pass True to add also port option for the kernel interface.
     :param add_maps_and_kernel_usage:   pass True to add also options for kernel switch and maps.
     """
-    cae.add_opt('shServerIP', "IP address of the Sihot WEB/KERNEL server", 'localhost', 'i')
+    cae.add_opt(SDF_SH_SERVER_ADDRESS, "IP address of the Sihot WEB/KERNEL server", 'localhost', 'i')
     cae.add_opt(SDF_SH_WEB_PORT, "IP port of the Sihot WEB interface", 14777, 'w')
     if client_port:
         # default is 14773 for Acumen and 14774 for the Sihot side (always the next higher port number)
@@ -449,10 +460,10 @@ def add_sh_options(cae: ConsoleApp, client_port: int = 0,
 
 def print_sh_options(cae: ConsoleApp):
     """ print the current config options values to the console. """
-    cae.po("Sihot server IP/WEB-interface-port:", cae.get_opt('shServerIP'), cae.get_opt(SDF_SH_WEB_PORT))
+    cae.po("Sihot server IP/WEB-interface-port:", cae.get_opt(SDF_SH_SERVER_ADDRESS), cae.get_opt(SDF_SH_WEB_PORT))
     client_port = cae.get_opt(SDF_SH_CLIENT_PORT)
     if client_port:
-        ip_addr = cae.get_var('shClientIP', default_value=cae.get_opt('shServerIP'))
+        ip_addr = cae.get_var('shClientIP', default_value=cae.get_opt(SDF_SH_SERVER_ADDRESS))
         cae.po("Sihot client IP/port for listening:", ip_addr, client_port)
     kernel_port = cae.get_opt(SDF_SH_KERNEL_PORT)
     if kernel_port:
@@ -592,7 +603,7 @@ def pax_count(shd: Record) -> int:
 
 
 def date_range_chunks(date_from: datetime.date, date_till: datetime.date, fetch_max_days: int
-                      ) -> (datetime.date, datetime.date):
+                      ) -> Iterator[Tuple[datetime.date, datetime.date]]:
     """ split date range into manageable chunks respecting the passed maximum days length and yield them back. """
     one_day = datetime.timedelta(days=1)
     add_days = datetime.timedelta(days=fetch_max_days) - one_day
@@ -613,7 +624,7 @@ def gds_no_to_ids(cae: ConsoleApp, hotel_id: str, gds_no: str) -> Dict[str, Any]
         ids['ResSubId'] = rfr.val('ResSubId') or ''
         ids['ResSfId'] = rfr.val('ResSfId') or ''
 
-    if not ids['ResSfId'] and gds_no.startswith('006'):
+    if not ids.get('ResSfId') and gds_no.startswith('006'):
         ids['ResSfId'] = gds_no
 
     return ids
@@ -621,27 +632,31 @@ def gds_no_to_ids(cae: ConsoleApp, hotel_id: str, gds_no: str) -> Dict[str, Any]
 
 def gds_no_to_obj_id(cae: ConsoleApp, hotel_id: str, gds_no: str) -> str:
     """ determine the Sihot object id of a reservation identified by the GDS number. """
-    return gds_no_to_ids(cae, hotel_id, gds_no).get('ResObjId')
+    return gds_no_to_ids(cae, hotel_id, gds_no).get('ResObjId', '')
 
 
-def res_no_to_ids(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> Dict[str, Any]:
+def res_no_to_ids(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> Union[str, Dict[str, Any]]:
     """ determine all reservation ids for a reservation with the passed reservation number. """
-    ret = dict(ResHotelId=hotel_id, ResId=res_id, ResSubId=sub_id)
     rfr = ResFetch(cae).fetch_by_res_id(hotel_id, res_id, sub_id)
-    if isinstance(rfr, Record):
-        ret['ResObjId'] = rfr.val('ResObjId') or ''
-        ret['ResGdsNo'] = rfr.val('ResGdsNo') or ''
-        ret['ResSfId'] = rfr.val('ResSfId') or ''
-        if not ret['ResSfId'] and ret['ResGdsNo'].startswith('006'):
-            ret['ResSfId'] = ret['ResGdsNo']
-    else:
-        ret = rfr
+    if isinstance(rfr, str):
+        cae.vpo(f"res_no_to_ids({hotel_id}, {res_id}, {sub_id}) error: {rfr}")
+        return rfr
+
+    ret = dict(ResHotelId=hotel_id, ResId=res_id, ResSubId=sub_id)
+    ret['ResObjId'] = rfr.val('ResObjId') or ''
+    ret['ResGdsNo'] = rfr.val('ResGdsNo') or ''
+    ret['ResSfId'] = rfr.val('ResSfId') or ''
+    if not ret['ResSfId'] and ret['ResGdsNo'].startswith('006'):
+        ret['ResSfId'] = ret['ResGdsNo']
     return ret
 
 
 def res_no_to_obj_id(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> str:
     """ determine the Sihot object id of a reservation identified by their reservation number. """
-    return res_no_to_ids(cae, hotel_id, res_id, sub_id).get('ResObjId')
+    ret = res_no_to_ids(cae, hotel_id, res_id, sub_id)
+    if isinstance(ret, Record):
+        return ret.get('ResObjId')
+    return ''
 
 
 def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date] = None,
@@ -829,11 +844,11 @@ class FldMapXmlParser(SihotXmlParser):
     def __init__(self, cae: ConsoleApp, elem_map):
         super(FldMapXmlParser, self).__init__(cae)
         self._elem_map = elem_map
-        self._collected_fields = list()
+        self._collected_fields: List[_Field] = list()
         self._current_data = ''
         self.elem_fld_map = None
 
-        self._rec = None
+        self._rec = Record()        # added for mypy - will be directly overwritten in self.clear_rec()
         self.clear_rec()
 
     def clear_rec(self):
@@ -847,7 +862,7 @@ class FldMapXmlParser(SihotXmlParser):
         return self
 
     @property
-    def rec(self):
+    def rec(self) -> Record:
         """ return the record data. """
         return self._rec
 
@@ -1216,7 +1231,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
         self.action = ''
         self._warning_frags = self.cae.get_var('warningFragments') or list()  # list of warning text fragments
-        self._warning_msgs = list()
+        self._warning_msgs: List[str] = list()
 
     def get_warnings(self) -> str:
         """ get warning messages as concatenated string. """
@@ -1389,7 +1404,7 @@ class ResToSihot(FldMapXmlBuilder):
         super().__init__(cae,
                          use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_RES),
                          elem_map=cae.get_var(SDF_SH_RES_MAP) or SH_RES_MAP)
-        self._gds_errors = dict()
+        self._gds_errors: Dict[str, Tuple[Record, str]] = dict()
         self._in_error_handling = False
 
     def _add_sihot_configs(self, rec: Record):
@@ -1555,8 +1570,9 @@ class ResToSihot(FldMapXmlBuilder):
 
     def send_res_to_sihot(self, rec: Record, ensure_client_mode: int = ECM_ENSURE_WITH_ERRORS) -> str:
         """ send reservation to Sihot system. """
-        req_fields = ('ResHotelId', ('ResGdsNo', 'ResId', 'ResObjId'), 'ResMktSegment', 'ResRoomCat', 'ResArrival',
-                      'ResDeparture')
+        req_fields: Tuple[Union[str, Tuple[str, ...]], ...] = (
+            'ResHotelId', ('ResGdsNo', 'ResId', 'ResObjId'), 'ResMktSegment', 'ResRoomCat', 'ResArrival',
+            'ResDeparture')
         action = rec.val('ResAction')
         if action != ACTION_DELETE:
             # for reservations deleted within Acumen there will be no ShId/AcuId/Surname
@@ -1692,10 +1708,10 @@ class ResBulkFetcher(BulkFetcherBase):
         self.fetch_chunk_pause_seconds = 1
         self.search_flags = ''
         self.search_scope = ''
-        self.allowed_mkt_src = list()
-        self.allowed_mkt_grp = list()
+        self.allowed_mkt_src: List[str] = list()
+        self.allowed_mkt_grp: List[str] = list()
 
-        self.adult_pers_types = None
+        self.adult_pers_types = ''
 
     def add_options(self):
         """ add command line options. """

@@ -1,3 +1,3 @@
-ae_core
-ae_sys_data
+ae_console          # including ae_core
 ae_sys_core_sh
+ae_sys_data

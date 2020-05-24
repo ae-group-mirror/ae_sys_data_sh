@@ -1,19 +1,28 @@
 <component name="ProjectDictionaryState">
   <dictionary name="andi">
     <words>
+      <w>acardlist</w>
       <w>addr</w>
+      <w>apers</w>
       <w>areslist</w>
       <w>basicdataonly</w>
       <w>calcsumdayprice</w>
+      <w>cchandle</w>
+      <w>cchandlevaliduntil</w>
+      <w>cclist</w>
       <w>cdlref</w>
       <w>cdref</w>
+      <w>centralguest</w>
+      <w>checklistentry</w>
       <w>contactlist</w>
       <w>exportextendedcomment</w>
       <w>extid</w>
       <w>extids</w>
+      <w>ferdir</w>
       <w>forcecalcdayprice</w>
       <w>gdsno</w>
       <w>gubse</w>
+      <w>guesttype</w>
       <w>hotmove</w>
       <w>idlist</w>
       <w>isdefault</w>
@@ -21,6 +30,7 @@
       <w>mandator</w>
       <w>marketcode</w>
       <w>matchcode</w>
+      <w>mypy</w>
       <w>nitesh</w>
       <w>nochilds</w>
       <w>noorderer</w>
@@ -30,13 +40,19 @@
       <w>norooms</w>
       <w>objid</w>
       <w>orderer</w>
+      <w>outputcounter</w>
       <w>pcat</w>
+      <w>pobox</w>
+      <w>rcip</w>
       <w>reschannel</w>
       <w>reschannellist</w>
       <w>rulref</w>
       <w>salesforce</w>
       <w>scheer</w>
       <w>sihot</w>
+      <w>stdo</w>
+      <w>stds</w>
+      <w>sumar</w>
       <w>sxml</w>
       <w>tcag</w>
       <w>tcrent</w>
