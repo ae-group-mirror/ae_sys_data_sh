@@ -22,8 +22,12 @@ from textwrap import wrap
 import pprint
 from typing import Union, Tuple, Optional, Any, Dict, List, Sequence, Iterator
 
-from ae.core import DATE_ISO, DEBUG_LEVEL_ENABLED, full_stack_trace, parse_date             # type: ignore
+from ae.system import DATE_ISO                                                              # type: ignore
+from ae.inspector import full_stack_trace                                                   # type: ignore
+from ae.literal import parse_date                                                           # type: ignore
+from ae.core import DEBUG_LEVEL_ENABLED                                                     # type: ignore
 from ae.console import ConsoleApp                                                           # type: ignore
+# noinspection PyProtectedMember
 from ae.sys_data import (                                                                   # type: ignore
     ACTION_INSERT, ACTION_UPDATE, ACTION_DELETE, ACTION_SEARCH, ACTION_BUILD,
     FAT_IDX, FAD_FROM, FAD_ONTO, LIST_TYPES, ALL_FIELDS, CALLABLE_SUFFIX,
@@ -37,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 
 FORE_SURNAME_SEP = ' '
@@ -853,8 +857,8 @@ class FldMapXmlParser(SihotXmlParser):
 
     def clear_rec(self):
         """ clear the record data. """
-        # clear_leafs does clear also the copied rec from the last reservation, therefore simply recreate new template
-        # self._rec.clear_leafs(system=self._rec.system, direction=self._rec.direction)
+        # clear_leaves does clear also the copied rec from the last reservation, therefore simply recreate new template
+        # self._rec.clear_leaves(system=self._rec.system, direction=self._rec.direction)
         # create field data parsing record and mapping dict for all elements having a field value
         self._rec = Record(system=SDI_SH, direction=FAD_FROM).add_system_fields(self._elem_map)
         self.elem_fld_map = self._rec.sys_name_field_map
@@ -1247,8 +1251,8 @@ class FldMapXmlBuilder(SihotXmlBuilder):
         if rec.system != SDI_SH or rec.direction != FAD_ONTO:
             rec.set_env(system=SDI_SH, direction=FAD_ONTO)
             rec.add_system_fields(self.elem_map)
-        rec.clear_leafs(reset_lists=False)     # reestablish default values - leave ResPersons occupants list untouched
-        rec.merge_leafs(ori_rec)    # , extend=False)
+        rec.clear_leaves(reset_lists=False)    # reestablish default values - leave ResPersons occupants list untouched
+        rec.merge_leaves(ori_rec)    # , extend=False)
 
     def prepare_map_xml(self, rec: Record, include_empty_values: bool = True) -> str:
         """ prepare and return xml string. """
@@ -1280,7 +1284,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 idx_path = idx if isinstance(idx, (tuple, list)) else (field_name_idx_path(idx) or (idx, ))
                 val = rec.val(*idx_path, system=SDI_SH, direction=FAD_ONTO, use_curr_idx=Value((1, )))
                 filter_fields = field.filterer(system=SDI_SH, direction=FAD_ONTO)
-                # finally not needed if clear_leafs() are called with reset_lists=False
+                # finally not needed if clear_leaves() are called with reset_lists=False
                 # if not filter_fields and len(idx_path) >= 3 and isinstance(idx_path[1], int) and idx_path[1] > 0:
                 #     fld = rec.node_child(idx)  # use template field's filter if not in sub-records 2..n
                 #     filter_fields = fld.filter(system=SDI_SH, direction=FAD_ONTO)
