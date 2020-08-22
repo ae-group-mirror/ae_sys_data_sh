@@ -41,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 
 FORE_SURNAME_SEP = ' '
@@ -80,8 +80,6 @@ MTI_FLD_FILTER = 3
 MTI_FLD_CNV_FROM = 4
 MTI_FLD_CNV_ONTO = 5
 
-# default map for ClientFromSihot.elem_fld_map instance and as read-only constant by AcuClientToSihot using the SIHOT
-# .. KERNEL interface because SiHOT WEB V9 has missing fields: initials (CD_INIT1/2) and profession (CD_INDUSTRY1/2)
 SH_CLIENT_MAP = \
     (
         ('OBJID', 'ShId', None,
@@ -143,6 +141,12 @@ SH_CLIENT_MAP = \
         # ('/L-EXTIDS', None, None,
         #  lambda f: f.ina(ACTION_SEARCH)),
     )
+""" default map for ClientFromSihot.elem_fld_map instance.
+as read-only constant by AcuClientToSihot using the SIHOT
+KERNEL interface because SiHOT WEB V9 has missing fields:
+initials (CD_INIT1/2) and profession (CD_INDUSTRY1/2).
+"""
+
 
 '''
 SH_CLIENT_PARSE_MAP = \
@@ -154,16 +158,15 @@ SH_CLIENT_PARSE_MAP = \
     )
 '''
 
-# Reservation interface mappings
-# .. first the mapping for the WEB interface
-""" taken from SIHOT.WEB IF doc page 58:
-    The first scope contains the following mandatory fields for all external systems and for SIHOT.PMS:
-
-        <GDSNO>, <RT>, <ARR>, <DEP>, <LAST-MOD>, <CAT>, <NOPAX>, <NOCHILDS>, <NOROOMS>, <NAME> or <COMPANY>.
-
-    With reservations from external systems is <PRICE-TOTAL> a mandatory field. With reservations for SIHOT.PMS,
-    <MATCHCODE> and <PWD> are mandatory fields.
-"""
+# Reservation interface mappings - first the mapping for the WEB interface.
+#
+# taken from SIHOT.WEB IF doc page 58:
+#     The first scope contains the following mandatory fields for all external systems and for SIHOT.PMS:
+#
+#         <GDSNO>, <RT>, <ARR>, <DEP>, <LAST-MOD>, <CAT>, <NOPAX>, <NOCHILDS>, <NOROOMS>, <NAME> or <COMPANY>.
+#
+#     With reservations from external systems is <PRICE-TOTAL> a mandatory field. With reservations for SIHOT.PMS,
+#     <MATCHCODE> and <PWD> are mandatory fields.
 SH_RES_MAP = \
     (
         ('SIHOT-Document' + ELEM_PATH_SEP + 'ID', 'ResHotelId'),  # [RES-]HOTEL/IDLIST/MANDATOR-NO/EXTERNAL-SYSTEM-ID
@@ -391,6 +394,7 @@ SH_RES_MAP = \
         ('/RESERVATION',),
         ('/ARESLIST',),
     )
+""" reservation map """
 
 '''
 MAP_PARSE_WEB_RES = \
