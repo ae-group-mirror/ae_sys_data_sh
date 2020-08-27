@@ -65,8 +65,8 @@ More info on the features and usage of this portion are available at
 [ReadTheDocs](https://ae.readthedocs.io/en/latest/_autosummary/ae.sys_data_sh.html#module-ae.sys_data_sh
 "ae_sys_data_sh documentation").
 
-<!-- Common files version 0.0.49 deployed  version 0.0.1 (with 0.0.49)
+<!-- Common files version 0.0.60 deployed version 0.1.4 (with 0.0.60)
      to https://gitlab.com/ae-group as ae_sys_data_sh module as well as
      to https://ae-group.gitlab.io with CI check results as well as
-     to https://pypi.org/project as ae-sys-data-sh package.
+     to https://pypi.org/project/ae-sys-data-sh as namespace portion ae-sys-data-sh.
 -->

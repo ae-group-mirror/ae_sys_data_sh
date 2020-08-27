@@ -41,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.0.4'
+__version__ = '0.1.4'
 
 
 FORE_SURNAME_SEP = ' '
