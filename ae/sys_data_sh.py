@@ -5,7 +5,7 @@ Sihot system data interface
 This portion is very old and needs refactoring and much more unit tests.
 
 The sys record data classes provided by this portion are based on client
-and server components (for to communicate with the Sihot PMS system)
+and server components (to communicate with the Sihot PMS system)
 provided by the :mod:`ae.sys_core_sh` portion of the ae namespace package.
 
 TODO:
@@ -41,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.2.5'
+__version__ = '0.2.6'
 
 
 FORE_SURNAME_SEP = ' '
@@ -184,7 +184,7 @@ SH_RES_MAP = \
         # ('NN2', 'ResSfId', None,
         # lambda f: not f.val()),
         # MATCHCODE, NAME, COMPANY and GUEST-ID are mutually exclusive
-        # MATCHCODE/GUEST-ID needed for DELETE action for to prevent Sihot error:
+        # MATCHCODE/GUEST-ID needed for DELETE action to prevent Sihot error:
         # .. "Could not find a key identifier for the client (name, matchcode, ...)"
         # ('GUEST-ID', 'ShId', None,
         #  lambda f: not f.rfv('ShId')},
@@ -224,7 +224,7 @@ SH_RES_MAP = \
          lambda f: f.ina(ACTION_DELETE) or f.srv('ResRates', 0, 'RateAmount')),
         ('/RATE', None, None,
          lambda f: f.ina(ACTION_DELETE) or f.srv('ResRates', 0, 'RateAmount')),
-        ('RATE/', None, None,               # alternative to previous default RATE section for to specify daily prices
+        ('RATE/', None, None,               # alternative to previous default RATE section to specify daily prices
          lambda f: f.ina(ACTION_DELETE) or not f.srv('ResRates', 0, 'RateAmount')),
         ('RATE' + ELEM_PATH_SEP + 'R', 'ResRateBoard', None,
          lambda f: f.ina(ACTION_DELETE) or not f.srv('ResRates', 0, 'RateAmount')),
@@ -259,7 +259,7 @@ SH_RES_MAP = \
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') not in ('OW', 'FB', 'RE', 'RI')),
         ('RESCHANNEL/', None, None,
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') not in ('OW', 'FB', 'RE', 'RI')),
-        # needed for to add RCI booking to RCI allotment
+        # needed to add RCI booking to RCI allotment
         ('RESCHANNEL' + ELEM_PATH_SEP + 'IDX', None, 1,
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') not in ('RE', 'RI')),
         ('RESCHANNEL' + ELEM_PATH_SEP + 'MATCHCODE', None, 'RCI',
@@ -273,7 +273,7 @@ SH_RES_MAP = \
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') != 'FB'),
         ('RESCHANNEL' + ELEM_PATH_SEP + 'ISPRICEOWNER', None, 1,
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') != 'FB'),
-        # needed for owner bookings for to select/use owner allotment
+        # needed for owner bookings to select/use owner allotment
         ('RESCHANNEL' + ELEM_PATH_SEP + 'IDX', None, 2,
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') != 'OW'),
         ('RESCHANNEL' + ELEM_PATH_SEP + 'MATCHCODE', None, 'TSP',
@@ -338,7 +338,7 @@ SH_RES_MAP = \
         # ('NO', 'ResChildren'),
         # ('/PERS-TYPE', ),
         # ('/PERS-TYPE-LIST', ),
-        # Person Records - each rec also used as root rec for to upsert occupants as client (so FAT_CAL lambda has to
+        # Person Records - each rec also used as root rec to upsert occupants as client (so FAT_CAL lambda has to
         # .. check also if the reservation data is available in PersSurname and TypeOfPerson!!!)
         ('PERSON/', None, None,
          lambda f: f.ina(ACTION_DELETE)),
@@ -398,7 +398,7 @@ SH_RES_MAP = \
 
 '''
 MAP_PARSE_WEB_RES = \
-    (   # ### EXTRA PARSING FIELDS (for to interpret reservation coming from the WEB interface)
+    (   # ### EXTRA PARSING FIELDS (to interpret reservation coming from the WEB interface)
         ('ACTION', 'ResAction'),
         ('STATUS', 'RU_STATUS'),
         ('RULREF', 'RUL_CODE'),
@@ -752,7 +752,7 @@ def obj_id_to_res_no(cae: ConsoleApp, obj_id: str) -> tuple:
 def _strip_err_msg(error_msg: str) -> str:
     pos1 = error_msg.find('error:')
     if pos1 != -1:
-        pos1 += 5  # put to position - 1 (for to allow -1 as valid pos if nothing got found)
+        pos1 += 5  # put to position - 1 (to allow -1 as valid pos if nothing got found)
     else:
         pos1 = error_msg.find('::')
     pos1 += 1
@@ -1025,7 +1025,7 @@ class GuestSearchResponse(FldMapXmlParser):
 
 
 class ClientFetch(SihotXmlBuilder):
-    """ build xml and send to the Sihot system for to fetch a client record. """
+    """ build xml and send to the Sihot system to fetch a client record. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae, use_kernel=True)
 
@@ -1250,7 +1250,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
         self._warning_msgs = list()
 
     def prepare_rec(self, rec: Record):
-        """ prepare record for to push to Sihot. """
+        """ prepare record to push to Sihot. """
         ori_rec = rec.copy(deepness=-1)
         if rec.system != SDI_SH or rec.direction != FAD_ONTO:
             rec.set_env(system=SDI_SH, direction=FAD_ONTO)
@@ -1294,7 +1294,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 #     filter_fields = fld.filter(system=SDI_SH, direction=FAD_ONTO)
             else:
                 # field recycling has buggy side effects because last map item can refer to different/changed record:
-                # if field is None:   # try to use field of last map item (especially for to get crx())
+                # if field is None:   # try to use field of last map item (especially to get crx())
                 field = next(iter(rec.values()))
                 val = elem_map_item[MTI_FLD_VAL] if len(elem_map_item) > MTI_FLD_VAL else ''
                 if callable(val):
@@ -1341,7 +1341,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
 
 class ClientToSihot(FldMapXmlBuilder):
-    """ extended xml builder class for to send/push client data to Sihot. """
+    """ extended xml builder class to send/push client data to Sihot. """
     def __init__(self, cae):
         super().__init__(cae,
                          use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_CLIENT),
@@ -1382,7 +1382,7 @@ class ClientToSihot(FldMapXmlBuilder):
         return self.send_to_server()
 
     def _send_person_to_sihot(self, rec: Record, first_person: str = "") -> str:
-        """ send client data of one person to Sihot, passing AcuId of first person for to send 2nd person. """
+        """ send client data of one person to Sihot, passing AcuId of first person to send 2nd person. """
         self._prepare_guest_xml(rec, fld_name_suffix='_P' if first_person else '')
         err_msg = self.send_to_server()
         if 'guest exists already' in err_msg and self.action == ACTION_INSERT:
@@ -1407,7 +1407,7 @@ class ClientToSihot(FldMapXmlBuilder):
 
 
 class ResToSihot(FldMapXmlBuilder):
-    """ extended xml builder for to send reservation data to Sihot. """
+    """ extended xml builder to send reservation data to Sihot. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae,
                          use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_RES),
@@ -1418,7 +1418,7 @@ class ResToSihot(FldMapXmlBuilder):
     def _add_sihot_configs(self, rec: Record):
         mkt_seg = rec.val('ResMktSegment', system='', direction='')
         hotel_id = rec.val('ResHotelId', system='', direction='')
-        arr_date = rec.val('ResArrival', system='', direction='')   # system/direction needed for to get date type
+        arr_date = rec.val('ResArrival', system='', direction='')   # system/direction needed to get date type
         today = datetime.datetime.today()
         get_var = self.cae.get_var
         extra_comments = list()
@@ -1456,7 +1456,7 @@ class ResToSihot(FldMapXmlBuilder):
                 rec.set_val(comment + "; " + res_cmt, 'ResComment', system='', direction='')
 
     def prepare_rec(self, rec: Record):
-        """ prepare reservation data for to be sent/pushed to Sihot system. """
+        """ prepare reservation data to be sent/pushed to Sihot system. """
         super().prepare_rec(rec)
 
         self._add_sihot_configs(rec)
@@ -1685,7 +1685,7 @@ class BulkFetcherBase:
 class GuestBulkFetcher(BulkFetcherBase):
     """
     WIP/NotUsed/NoTests: the problem is with GUEST-SEARCH is that there is no way to bulk fetch all guests
-    because the search criteria is not providing range search for to split in slices. Fetching all 600k clients
+    because the search criteria is not providing range search to split in slices. Fetching all 600k clients
     is resulting in a timeout error after 30 minutes (see Sihot interface SDF_SH_TIMEOUT/'shTimeout' option value)
     """
     def fetch_all(self) -> Records:
@@ -1743,7 +1743,7 @@ class ResBulkFetcher(BulkFetcherBase):
                    .format(self.date_till, self.startup_date))
             cae.shutdown(3319)
 
-        # fetch given date range in chunks for to prevent timeouts and Sihot server blocking issues
+        # fetch given date range in chunks to prevent timeouts and Sihot server blocking issues
         self.max_length_of_stay = min(max(1, cae.get_var('shFetchMaxDays', default_value=7)), 31)
         self.fetch_chunk_pause_seconds = cae.get_var('shFetchPauseSeconds', default_value=1)
 
@@ -1786,7 +1786,7 @@ class ResBulkFetcher(BulkFetcherBase):
 
 
 class ResSender(ResToSihot):
-    """ helper class for to send reservation records to Sihot. """
+    """ helper class to send reservation records to Sihot. """
     def send_rec(self, rec: Record) -> Tuple[str, str]:
         """ send reservation record. """
         msg = ""
