@@ -1,32 +1,34 @@
-<!--
-  THIS FILE IS EXCLUSIVELY MAINTAINED IN THE NAMESPACE ROOT PACKAGE. CHANGES HAVE TO BE DONE THERE.
--->
-# sys_data_sh portion of ae namespace package
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project ae V0.2.85 -->
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev_tpl_namespace_root V0.3.6 -->
+# sys_data_sh 0.3.6
 
-[![GitLabPipeline](https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/master?logo=python)](
+[![GitLab develop](https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/develop?logo=python)](
     https://gitlab.com/ae-group/ae_sys_data_sh)
-[![PyPIVersion](https://img.shields.io/pypi/v/ae_sys_data_sh)](
+[![LatestPyPIrelease](
+    https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/release0.2.6?logo=python)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/-/tree/release0.2.6)
+[![PyPIVersions](https://img.shields.io/pypi/v/ae_sys_data_sh)](
     https://pypi.org/project/ae-sys-data-sh/#history)
 
->The portions (modules and sub-packages) of the Application Environment for Python are within
-the `ae` namespace and are providing helper methods and classes to develop
-full-featured applications with Python.
+>ae namespace module portion sys_data_sh: Sihot system data interface.
 
 [![Coverage](https://ae-group.gitlab.io/ae_sys_data_sh/coverage.svg)](
-    https://ae-group.gitlab.io/ae_sys_data_sh/coverage/ae_sys_data_sh_py.html)
+    https://ae-group.gitlab.io/ae_sys_data_sh/coverage/index.html)
 [![MyPyPrecision](https://ae-group.gitlab.io/ae_sys_data_sh/mypy.svg)](
     https://ae-group.gitlab.io/ae_sys_data_sh/lineprecision.txt)
 [![PyLintScore](https://ae-group.gitlab.io/ae_sys_data_sh/pylint.svg)](
     https://ae-group.gitlab.io/ae_sys_data_sh/pylint.log)
 
 [![PyPIImplementation](https://img.shields.io/pypi/implementation/ae_sys_data_sh)](
-    https://pypi.org/project/ae-sys-data-sh/)
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
 [![PyPIPyVersions](https://img.shields.io/pypi/pyversions/ae_sys_data_sh)](
-    https://pypi.org/project/ae-sys-data-sh/)
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
 [![PyPIWheel](https://img.shields.io/pypi/wheel/ae_sys_data_sh)](
-    https://pypi.org/project/ae-sys-data-sh/)
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
 [![PyPIFormat](https://img.shields.io/pypi/format/ae_sys_data_sh)](
     https://pypi.org/project/ae-sys-data-sh/)
+[![PyPILicense](https://img.shields.io/pypi/l/ae_sys_data_sh)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/-/blob/develop/LICENSE.md)
 [![PyPIStatus](https://img.shields.io/pypi/status/ae_sys_data_sh)](
     https://libraries.io/pypi/ae-sys-data-sh)
 [![PyPIDownloads](https://img.shields.io/pypi/dm/ae_sys_data_sh)](
@@ -36,36 +38,38 @@ full-featured applications with Python.
 ## installation
 
 
-execute the following command to use the ae.sys_data_sh module in your
-application. it will install ae.sys_data_sh into your python (virtual) environment:
+execute the following command to install the
+ae.sys_data_sh module
+in the currently active virtual environment:
  
 ```shell script
 pip install ae-sys-data-sh
 ```
 
-if you instead want to contribute to this portion then first fork
-[the ae_sys_data_sh repository at GitLab](https://gitlab.com/ae-group/ae_sys_data_sh "ae.sys_data_sh code repository"),
-then pull it to your machine and finally execute the following command in the root folder
-of this repository (ae_sys_data_sh):
+if you want to contribute to this portion then first fork
+[the ae_sys_data_sh repository at GitLab](
+https://gitlab.com/ae-group/ae_sys_data_sh "ae.sys_data_sh code repository").
+after that pull it to your machine and finally execute the
+following command in the root folder of this repository
+(ae_sys_data_sh):
 
 ```shell script
 pip install -e .[dev]
 ```
 
-the last command will install this module portion into your virtual environment, along with
-the tools you need to develop and run tests or to extend the portion documentation.
-to contribute only to the unit tests or to the documentation of this portion replace
-the setup extras key `dev` in the above command with `tests` or `docs` respectively.
+the last command will install this module portion, along with the tools you need
+to develop and run tests or to extend the portion documentation. to contribute only to the unit tests or to the
+documentation of this portion, replace the setup extras key `dev` in the above command with `tests` or `docs`
+respectively.
+
+more detailed explanations on how to contribute to this project
+[are available here](
+https://gitlab.com/ae-group/ae_sys_data_sh/-/blob/develop/CONTRIBUTING.rst)
 
 
 ## namespace portion documentation
 
-more info on the features and usage of this portion are available at
-[ReadTheDocs](https://ae.readthedocs.io/en/latest/_autosummary/ae.sys_data_sh.html#module-ae.sys_data_sh
+information on the features and usage of this portion are available at
+[ReadTheDocs](
+https://ae.readthedocs.io/en/latest/_autosummary/ae.sys_data_sh.html#module-ae.sys_data_sh
 "ae_sys_data_sh documentation").
-
-<!-- common files version 0.2.77 deployed version 0.2.5 (with 0.2.77)
-     to https://gitlab.com/ae-group as ae_sys_data_sh module as well as
-     to https://ae-group.gitlab.io with CI check results as well as
-     to https://pypi.org/project/ae-sys-data-sh as namespace portion ae-sys-data-sh.
--->

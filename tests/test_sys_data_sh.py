@@ -130,7 +130,7 @@ class TestGuestData:
 
 class TestElemHelpers:
     def test_elem_path_join(self):
-        assert elem_path_join(list()) == ""
+        assert elem_path_join([]) == ""
         assert elem_path_join(['path', 'to', 'elem']) == "path" + ELEM_PATH_SEP + "to" + ELEM_PATH_SEP + "elem"
 
     def test_hotel_and_res_id(self):

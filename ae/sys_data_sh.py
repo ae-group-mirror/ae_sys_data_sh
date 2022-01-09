@@ -41,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.2.6'
+__version__ = '0.3.6'
 
 
 FORE_SURNAME_SEP = ' '
@@ -711,7 +711,7 @@ def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date]
                     minimum_debug_level=DEBUG_LEVEL_ENABLED)
             valid_recs = Records()
             for res_rec in chunk_recs:
-                reasons = list()
+                reasons = []
                 check_in = res_rec.val('ResArrival')
                 check_out = res_rec.val('ResDeparture')
                 if not check_in or not check_out:
@@ -794,7 +794,7 @@ class OldGuestSearchResponse(SihotXmlParser):
         self._ret_elem_names = ret_elem_names    # list of names of XML-elements or response-base-attributes
         self._return_value_as_key = len(ret_elem_names) == 1 and ret_elem_names[0][0] == ':'
 
-        self.ret_elem_values = dict() if self._return_value_as_key else list()
+        self.ret_elem_values = {} if self._return_value_as_key else []
         self._key_elem_index = 0
         self._in_guest_profile = False
         self._elem_fld_map_parser = FldMapXmlParser(cae, deepcopy(full_map))
@@ -835,7 +835,7 @@ class OldGuestSearchResponse(SihotXmlParser):
                 if len(elem_names) == 1:
                     self.ret_elem_values.append(getattr(self, elem_to_attr(elem_names[0])))
                 else:
-                    values = dict()
+                    values = {}
                     for elem in elem_names:
                         if elem in self._elem_fld_map_parser.elem_fld_map:
                             field = self._elem_fld_map_parser.elem_fld_map[elem]
@@ -852,7 +852,7 @@ class FldMapXmlParser(SihotXmlParser):
     def __init__(self, cae: ConsoleApp, elem_map):
         super(FldMapXmlParser, self).__init__(cae)
         self._elem_map = elem_map
-        self._collected_fields: List[_Field] = list()
+        self._collected_fields: List[_Field] = []
         self._current_data = ''
         self.elem_fld_map = None
 
@@ -908,7 +908,7 @@ class FldMapXmlParser(SihotXmlParser):
                     val = '0'
                 self.cae.dpo(msg + "setting field {} to {!r}".format(curr_idx, val))
                 self._rec.set_val(val, *curr_idx, system=SDI_SH, direction=FAD_FROM)
-        self._collected_fields = list()
+        self._collected_fields = []
 
         for elem_name, *_ in self._elem_map:
             if elem_name == '/' + tag:
@@ -981,7 +981,7 @@ class GuestSearchResponse(FldMapXmlParser):
         self._return_value_as_key = len(ret_elem_names) == 1 and ret_elem_names[0][0] == ':'
         self._key_elem_name = key_elem_name
 
-        self.ret_elem_values = dict() if self._return_value_as_key else list()
+        self.ret_elem_values = {} if self._return_value_as_key else []
         self._key_elem_index = 0
 
     def parse_xml(self, xml):
@@ -1013,7 +1013,7 @@ class GuestSearchResponse(FldMapXmlParser):
                 if len(elem_names) == 1:
                     self.ret_elem_values.append(getattr(self, elem_to_attr(elem_names[0])))
                 else:
-                    values = dict()
+                    values = {}
                     for elem in elem_names:
                         if elem in self.elem_fld_map:
                             field = self.elem_fld_map[elem]
@@ -1238,8 +1238,8 @@ class FldMapXmlBuilder(SihotXmlBuilder):
         self.elem_map = deepcopy(elem_map or cae.get_opt(SDF_SH_RES_MAP))
 
         self.action = ''
-        self._warning_frags = self.cae.get_var('warningFragments') or list()  # list of warning text fragments
-        self._warning_msgs: List[str] = list()
+        self._warning_frags = self.cae.get_var('warningFragments') or []  # list of warning text fragments
+        self._warning_msgs: List[str] = []
 
     def get_warnings(self) -> str:
         """ get warning messages as concatenated string. """
@@ -1247,7 +1247,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
     def wipe_warnings(self):
         """ wipe all collected warning messages. """
-        self._warning_msgs = list()
+        self._warning_msgs = []
 
     def prepare_rec(self, rec: Record):
         """ prepare record to push to Sihot. """
@@ -1412,7 +1412,7 @@ class ResToSihot(FldMapXmlBuilder):
         super().__init__(cae,
                          use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_RES),
                          elem_map=cae.get_var(SDF_SH_RES_MAP) or SH_RES_MAP)
-        self._gds_errors: Dict[str, Tuple[Record, str]] = dict()
+        self._gds_errors: Dict[str, Tuple[Record, str]] = {}
         self._in_error_handling = False
 
     def _add_sihot_configs(self, rec: Record):
@@ -1421,7 +1421,7 @@ class ResToSihot(FldMapXmlBuilder):
         arr_date = rec.val('ResArrival', system='', direction='')   # system/direction needed to get date type
         today = datetime.datetime.today()
         get_var = self.cae.get_var
-        extra_comments = list()
+        extra_comments = []
 
         if self.action != ACTION_DELETE and rec.val('ResStatus', system='', direction='') != 'S':
             val = get_var(mkt_seg + '_' + hotel_id, section='SihotResTypes',
@@ -1553,7 +1553,7 @@ class ResToSihot(FldMapXmlBuilder):
         err_msg = ""
 
         # check occupants that are already registered (having a client reference)
-        sent_clients = list()
+        sent_clients = []
         if rec.val('ResPersons'):
             for occ_rec in rec.value('ResPersons', flex_sys_dir=True):
                 if occ_rec.val('PersAcuId'):
@@ -1657,7 +1657,7 @@ class ResToSihot(FldMapXmlBuilder):
 
     def wipe_gds_errors(self):
         """ wipe collected gds errors. """
-        self._gds_errors = dict()
+        self._gds_errors = {}
 
 
 class BulkFetcherBase:
@@ -1716,8 +1716,8 @@ class ResBulkFetcher(BulkFetcherBase):
         self.fetch_chunk_pause_seconds = 1
         self.search_flags = ''
         self.search_scope = ''
-        self.allowed_mkt_src: List[str] = list()
-        self.allowed_mkt_grp: List[str] = list()
+        self.allowed_mkt_src: List[str] = []
+        self.allowed_mkt_grp: List[str] = []
 
         self.adult_pers_types = ''
 
@@ -1750,8 +1750,8 @@ class ResBulkFetcher(BulkFetcherBase):
         self.search_flags = cae.get_var('ResSearchFlags', default_value='ALL-HOTELS')
         self.search_scope = cae.get_var('ResSearchScope', default_value='NOORDERER;NORATES;NOPERSTYPES')
 
-        self.allowed_mkt_src = cae.get_var('MarketSources', default_value=list())
-        self.allowed_mkt_grp = cae.get_var('MarketGroups', default_value=list())
+        self.allowed_mkt_src = cae.get_var('MarketSources', default_value=[])
+        self.allowed_mkt_grp = cae.get_var('MarketGroups', default_value=[])
 
         self.adult_pers_types = cae.get_var('shAdultPersTypes')
 
