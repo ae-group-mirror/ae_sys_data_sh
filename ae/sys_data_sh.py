@@ -22,9 +22,8 @@ from textwrap import wrap
 import pprint
 from typing import Union, Tuple, Optional, Any, Dict, List, Sequence, Iterator
 
-from ae.base import DATE_ISO                                                                # type: ignore
+from ae.base import DATE_ISO, full_stack_trace                                              # type: ignore
 from ae.parse_date import parse_date                                                        # type: ignore
-from ae.inspector import full_stack_trace                                                   # type: ignore
 from ae.core import DEBUG_LEVEL_ENABLED                                                     # type: ignore
 from ae.console import ConsoleApp                                                           # type: ignore
 # noinspection PyProtectedMember
@@ -41,7 +40,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.3.6'
+__version__ = '0.3.7'
 
 
 FORE_SURNAME_SEP = ' '
