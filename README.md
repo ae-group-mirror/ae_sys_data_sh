@@ -1,15 +1,75 @@
-# ae_sys_data_sh module 0.3.7
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project ae.ae V0.3.90 -->
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev.tpl_namespace_root V0.3.12 -->
+# sys_data_sh 0.3.8
 
-ae_sys_data_sh is a Python multi-platform module project based on the [__Kivy__ Framework](https://kivy.org) 
-and some portions of the [__ae__ namespace(Application Environment)](https://ae.readthedocs.io "ae on rtd").
+[![GitLab develop](https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/develop?logo=python)](
+    https://gitlab.com/ae-group/ae_sys_data_sh)
+[![LatestPyPIrelease](
+    https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/release0.3.7?logo=python)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/-/tree/release0.3.7)
+[![PyPIVersions](https://img.shields.io/pypi/v/ae_sys_data_sh)](
+    https://pypi.org/project/ae-sys-data-sh/#history)
 
-the source code is available at [Gitlab](https://gitlab.com/ae-group/ae_sys_data_sh) maintained by the user group ae-group.
+>ae namespace module portion sys_data_sh: Sihot system data interface.
 
-additional credits to:
+[![Coverage](https://ae-group.gitlab.io/ae_sys_data_sh/coverage.svg)](
+    https://ae-group.gitlab.io/ae_sys_data_sh/coverage/index.html)
+[![MyPyPrecision](https://ae-group.gitlab.io/ae_sys_data_sh/mypy.svg)](
+    https://ae-group.gitlab.io/ae_sys_data_sh/lineprecision.txt)
+[![PyLintScore](https://ae-group.gitlab.io/ae_sys_data_sh/pylint.svg)](
+    https://ae-group.gitlab.io/ae_sys_data_sh/pylint.log)
 
-* [__Erokia__](https://freesound.org/people/Erokia/) and 
-  [__plasterbrain__](https://freesound.org/people/plasterbrain/) at
-  [freesound.org](https://freesound.org) for the sounds.
-* [__iconmonstr__](https://iconmonstr.com/interface/) and
-  [__Google__](https://fonts.google.com/icons?icon.set=Material+Symbols) for the icon images.
+[![PyPIImplementation](https://img.shields.io/pypi/implementation/ae_sys_data_sh)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
+[![PyPIPyVersions](https://img.shields.io/pypi/pyversions/ae_sys_data_sh)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
+[![PyPIWheel](https://img.shields.io/pypi/wheel/ae_sys_data_sh)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/)
+[![PyPIFormat](https://img.shields.io/pypi/format/ae_sys_data_sh)](
+    https://pypi.org/project/ae-sys-data-sh/)
+[![PyPILicense](https://img.shields.io/pypi/l/ae_sys_data_sh)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/-/blob/develop/LICENSE.md)
+[![PyPIStatus](https://img.shields.io/pypi/status/ae_sys_data_sh)](
+    https://libraries.io/pypi/ae-sys-data-sh)
+[![PyPIDownloads](https://img.shields.io/pypi/dm/ae_sys_data_sh)](
+    https://pypi.org/project/ae-sys-data-sh/#files)
 
+
+## installation
+
+
+execute the following command to install the
+ae.sys_data_sh module
+in the currently active virtual environment:
+ 
+```shell script
+pip install ae-sys-data-sh
+```
+
+if you want to contribute to this portion then first fork
+[the ae_sys_data_sh repository at GitLab](
+https://gitlab.com/ae-group/ae_sys_data_sh "ae.sys_data_sh code repository").
+after that pull it to your machine and finally execute the
+following command in the root folder of this repository
+(ae_sys_data_sh):
+
+```shell script
+pip install -e .[dev]
+```
+
+the last command will install this module portion, along with the tools you need
+to develop and run tests or to extend the portion documentation. to contribute only to the unit tests or to the
+documentation of this portion, replace the setup extras key `dev` in the above command with `tests` or `docs`
+respectively.
+
+more detailed explanations on how to contribute to this project
+[are available here](
+https://gitlab.com/ae-group/ae_sys_data_sh/-/blob/develop/CONTRIBUTING.rst)
+
+
+## namespace portion documentation
+
+information on the features and usage of this portion are available at
+[ReadTheDocs](
+https://ae.readthedocs.io/en/latest/_autosummary/ae.sys_data_sh.html
+"ae_sys_data_sh documentation").
