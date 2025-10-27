@@ -14,6 +14,7 @@ TODO:
     - add much more unit tests.
 
 """
+# pylint: disable=too-many-lines
 import datetime
 import time
 from traceback import format_exc, print_exc
@@ -40,7 +41,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.3.8'
+__version__ = '0.3.9'
 
 
 FORE_SURNAME_SEP = ' '
@@ -59,7 +60,7 @@ ECM_DO_NOT_SEND_CLIENT = 2
 ppf = pprint.PrettyPrinter(indent=12, width=96, depth=9).pformat
 
 
-def convert_date_from_sh(xml_string: str) -> datetime.date:
+def convert_date_from_sh(xml_string: str) -> Union[datetime.date, str]:
     """ convert date string sent by the Sihot system into a datetime.date value. """
     return parse_date(xml_string, ret_date=True) if xml_string else ''
 
@@ -147,6 +148,7 @@ initials (CD_INIT1/2) and profession (CD_INDUSTRY1/2).
 """
 
 
+# pylint: disable=pointless-string-statement
 '''
 SH_CLIENT_PARSE_MAP = \
     (
@@ -395,6 +397,7 @@ SH_RES_MAP = \
     )
 """ reservation map """
 
+# pylint: disable=pointless-string-statement
 '''
 MAP_PARSE_WEB_RES = \
     (   # ### EXTRA PARSING FIELDS (to interpret reservation coming from the WEB interface)
@@ -446,36 +449,37 @@ def add_sh_options(cae: ConsoleApp, client_port: int = 0,
     :param add_kernel_port:             pass True to add also port option for the kernel interface.
     :param add_maps_and_kernel_usage:   pass True to add also options for kernel switch and maps.
     """
-    cae.add_opt(SDF_SH_SERVER_ADDRESS, "IP address of the Sihot WEB/KERNEL server", 'localhost', 'i')
-    cae.add_opt(SDF_SH_WEB_PORT, "IP port of the Sihot WEB interface", 14777, 'w')
+    cae.add_option(SDF_SH_SERVER_ADDRESS, "IP address of the Sihot WEB/KERNEL server", 'localhost', short_opt='i')
+    cae.add_option(SDF_SH_WEB_PORT, "IP port of the Sihot WEB interface", 14777, short_opt='w')
     if client_port:
         # default is 14773 for Acumen and 14774 for the Sihot side (always the next higher port number)
-        cae.add_opt(SDF_SH_CLIENT_PORT, "IP port of SXML interface of this server for Sihot", client_port, 'm')
+        cae.add_option(SDF_SH_CLIENT_PORT, "IP port of SXML interface of this server for Sihot", client_port,
+                       short_opt='m')
     if add_kernel_port:
         # e.g. for GuestBulkFetcher we need also the kernel interface server port of Sihot
-        cae.add_opt(SDF_SH_KERNEL_PORT, "IP port of the KERNEL interface of the Sihot server", 14772, 'k')
-    cae.add_opt(SDF_SH_TIMEOUT, "Timeout value for TCP/IP connections to Sihot", 1869.6, 't')
-    cae.add_opt(SDF_SH_XML_ENCODING, "Charset used for the Sihot xml data", SXML_DEF_ENCODING, 'e')
+        cae.add_option(SDF_SH_KERNEL_PORT, "IP port of the KERNEL interface of the Sihot server", 14772, short_opt='k')
+    cae.add_option(SDF_SH_TIMEOUT, "Timeout value for TCP/IP connections to Sihot", 1869.6, short_opt='t')
+    cae.add_option(SDF_SH_XML_ENCODING, "Charset used for the Sihot xml data", SXML_DEF_ENCODING, short_opt='e')
     if add_maps_and_kernel_usage:
-        cae.add_opt(SDF_SH_USE_KERNEL_FOR_CLIENT, "Used interface for clients (0=web, 1=kernel)",
-                    USE_KERNEL_FOR_CLIENTS_DEF, 'g', choices=(0, 1))
-        cae.add_opt(SDF_SH_CLIENT_MAP, "Guest/Client mapping of xml to db items", SH_CLIENT_MAP, 'm')
-        cae.add_opt(SDF_SH_USE_KERNEL_FOR_RES, "Used interface for reservations (0=web, 1=kernel)",
-                    USE_KERNEL_FOR_RES_DEF, 'z', choices=(0, 1))
-        cae.add_opt(SDF_SH_RES_MAP, "Reservation mapping of xml to db items", SH_RES_MAP, 'n')
+        cae.add_option(SDF_SH_USE_KERNEL_FOR_CLIENT, "Used interface for clients (0=web, 1=kernel)",
+                       USE_KERNEL_FOR_CLIENTS_DEF, short_opt='g', choices=(0, 1))
+        cae.add_option(SDF_SH_CLIENT_MAP, "Guest/Client mapping of xml to db items", SH_CLIENT_MAP, short_opt='m')
+        cae.add_option(SDF_SH_USE_KERNEL_FOR_RES, "Used interface for reservations (0=web, 1=kernel)",
+                       USE_KERNEL_FOR_RES_DEF, short_opt='z', choices=(0, 1))
+        cae.add_option(SDF_SH_RES_MAP, "Reservation mapping of xml to db items", SH_RES_MAP, short_opt='n')
 
 
 def print_sh_options(cae: ConsoleApp):
     """ print the current config options values to the console. """
-    cae.po("Sihot server IP/WEB-interface-port:", cae.get_opt(SDF_SH_SERVER_ADDRESS), cae.get_opt(SDF_SH_WEB_PORT))
-    client_port = cae.get_opt(SDF_SH_CLIENT_PORT)
+    cae.po(f"Sihot server IP/WEB-port: {cae.get_option(SDF_SH_SERVER_ADDRESS)}:{cae.get_option(SDF_SH_WEB_PORT)}")
+    client_port = cae.get_option(SDF_SH_CLIENT_PORT)
     if client_port:
-        ip_addr = cae.get_var('shClientIP', default_value=cae.get_opt(SDF_SH_SERVER_ADDRESS))
+        ip_addr = cae.get_variable('shClientIP', default_value=cae.get_option(SDF_SH_SERVER_ADDRESS))
         cae.po("Sihot client IP/port for listening:", ip_addr, client_port)
-    kernel_port = cae.get_opt(SDF_SH_KERNEL_PORT)
+    kernel_port = cae.get_option(SDF_SH_KERNEL_PORT)
     if kernel_port:
         cae.po("Sihot server KERNEL-interface-port:", kernel_port)
-    cae.po("Sihot TCP Timeout/XML Encoding:", cae.get_opt(SDF_SH_TIMEOUT), cae.get_opt(SDF_SH_XML_ENCODING))
+    cae.po("Sihot TCP Timeout/XML Encoding:", cae.get_option(SDF_SH_TIMEOUT), cae.get_option(SDF_SH_XML_ENCODING))
 
 
 def client_data(cae: ConsoleApp, obj_id: str) -> Record:
@@ -490,36 +494,33 @@ def client_data(cae: ConsoleApp, obj_id: str) -> Record:
     return ret
 
 
-def complete_res_data(rec: Record) -> Record:
+def complete_res_data(rec: Record) -> Record:   # pylint: disable=too-many-locals,too-many-branches
     """ complete reservation data row (rec) with default values.
 
-    :param rec:     reservation data Record instance.
-    :return:        completed reservation data Record instance.
+        :param rec:     reservation data Record instance.
+        :return:        completed reservation data Record instance.
 
-    un-changed fields:
-        ResRoomNo, ResNote, ResLongNote, ResFlightArrComment (flight no...), ResAllotmentNo, ResVoucherNo.
-    mandatory fields:
-        ShId or AcuId or Surname (to specify the orderer of the reservation), ResHotelId, ResArrival, ResDeparture,
-        ResRoomCat, ResMktSegment, ResGdsNo, ResAdults, ResChildren.
-    optional fields:
-        ResPersons0PersSurname and ResPersons0PersForename (surname and forename)
-        ResPersons1PersSurname and ResPersons1PersForename ( ... )
-    optional auto-populated fields:
-        see the default values - specified in default_values dict underneath.
-    """
-    default_values = dict(ResStatus='1',
-                          ResAction=ACTION_INSERT,
-                          ResBooked=datetime.datetime.today(),
-                          # removed for Nitesh SihotResImport:
-                          # ResPriceCat=rec.val('ResRoomCat', system='', direction=''),
-                          ResBoard='RO',  # room only (no board/meal-plan)
-                          ResAccount='1',
-                          ResSource='A',
-                          ResRateSegment=rec.val('ResMktSegment', system='', direction=''),
-                          ResMktGroup='RS',
-                          ResAdults=2,
-                          ResChildren=0,
-                          )
+        un-changed fields:
+            ResRoomNo, ResNote, ResLongNote, ResFlightArrComment (flight no...), ResAllotmentNo, ResVoucherNo.
+        mandatory fields:
+            ShId or AcuId or Surname (to specify the orderer of the reservation), ResHotelId, ResArrival, ResDeparture,
+            ResRoomCat, ResMktSegment, ResGdsNo, ResAdults, ResChildren.
+        optional fields:
+            ResPersons0PersSurname and ResPersons0PersForename (surname and forename)
+            ResPersons1PersSurname and ResPersons1PersForename ( ... )
+        optional auto-populated fields:
+            see the default values - specified in default_values dict underneath.
+        """
+    default_values = {'ResStatus': '1',
+                      'ResAction': ACTION_INSERT,
+                      'ResBooked': datetime.datetime.today(),
+                      'ResBoard': 'RO',
+                      'ResAccount': '1',
+                      'ResSource': 'A',
+                      'ResRateSegment': rec.val('ResMktSegment', system='', direction=''),
+                      'ResMktGroup': 'RS',
+                      'ResAdults': 2,
+                      'ResChildren': 0}
     for field_name, field_value in default_values.items():
         if not rec.val(field_name, system='', direction='') and field_value not in ('', None):
             rec.set_val(field_value, field_name, system='', direction='')
@@ -623,7 +624,7 @@ def date_range_chunks(date_from: datetime.date, date_till: datetime.date, fetch_
 
 def gds_no_to_ids(cae: ConsoleApp, hotel_id: str, gds_no: str) -> Dict[str, Any]:
     """ determine all reservation ids for a reservation with the passed GDS number. """
-    ids = dict(ResHotelId=hotel_id, ResGdsNo=gds_no)
+    ids = {'ResHotelId': hotel_id, 'ResGdsNo': gds_no}
     rfr = ResFetch(cae).fetch_by_gds_no(hotel_id, gds_no)
     if isinstance(rfr, Record):
         ids['ResObjId'] = rfr.val('ResObjId') or ''
@@ -649,10 +650,8 @@ def res_no_to_ids(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> U
         cae.vpo(f"res_no_to_ids({hotel_id}, {res_id}, {sub_id}) error: {rfr}")
         return rfr
 
-    ret = dict(ResHotelId=hotel_id, ResId=res_id, ResSubId=sub_id)
-    ret['ResObjId'] = rfr.val('ResObjId') or ''
-    ret['ResGdsNo'] = rfr.val('ResGdsNo') or ''
-    ret['ResSfId'] = rfr.val('ResSfId') or ''
+    ret = {'ResHotelId': hotel_id, 'ResId': res_id, 'ResSubId': sub_id, 'ResObjId': rfr.val('ResObjId') or '',
+           'ResGdsNo': rfr.val('ResGdsNo') or '', 'ResSfId': rfr.val('ResSfId') or ''}
     if not ret['ResSfId'] and ret['ResGdsNo'].startswith('006'):
         ret['ResSfId'] = ret['ResGdsNo']
     return ret
@@ -666,6 +665,7 @@ def res_no_to_obj_id(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -
     return ''
 
 
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date] = None,
                mkt_sources: Optional[List[str]] = None, mkt_groups: Optional[List[str]] = None,
                max_los: int = 28,
@@ -698,16 +698,15 @@ def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date]
             chunk_recs = res_searcher.search_res(from_date=chunk_beg, to_date=chunk_end, flags=search_flags,
                                                  scope=search_scope)
             if chunk_recs and isinstance(chunk_recs, str):
-                err_msg = "Sihot.PMS reservation search error: {}".format(chunk_recs)
+                err_msg = f"Sihot.PMS reservation search error: {chunk_recs}"
                 break
 
             if not chunk_recs or not isinstance(chunk_recs, list):
                 err_msg = "Unspecified Sihot.PMS reservation search error"
                 break
 
-            cae.vpo(" ###  Fetched {} reservations from Sihot with arrivals between {} and {} - flags={}, scope={}"
-                    .format(len(chunk_recs), chunk_beg, chunk_end, search_flags, search_scope),
-                    minimum_debug_level=DEBUG_LEVEL_ENABLED)
+            cae.dpo(f" ###  Fetched {len(chunk_recs)} reservations from SiHot with arrivals between {chunk_beg}"
+                    f" and {chunk_end} - flags={search_flags}, scope={search_scope}")
             valid_recs = Records()
             for res_rec in chunk_recs:
                 reasons = []
@@ -719,10 +718,10 @@ def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date]
                     reasons.append(f"arrival {check_in} not between {date_from} and {date_till}")
                 mkt_src = res_rec.val('ResMktSegment')
                 if mkt_sources and mkt_src not in mkt_sources:
-                    reasons.append("disallowed market source {}".format(mkt_src))
+                    reasons.append(f"disallowed market source {mkt_src}")
                 mkt_group = res_rec.val('ResMktGroup')
                 if mkt_groups and mkt_group not in mkt_groups:
-                    reasons.append("disallowed market group/channel {}".format(mkt_group))
+                    reasons.append(f"disallowed market group/channel {mkt_group}")
                 if reasons:
                     cae.dpo("  ##  Skipped Sihot reservation:", res_rec, " reason(s):", reasons)
                     continue
@@ -730,8 +729,8 @@ def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date]
 
             all_recs.extend(valid_recs)
             time.sleep(chunk_pause)
-    except Exception as ex:
-        err_msg = "Sihot interface reservation fetch exception: {}\n{}".format(ex, format_exc())
+    except Exception as ex:                 # pylint: disable=broad-exception-caught
+        err_msg = f"Sihot interface reservation fetch exception: {ex}\n{format_exc()}"
 
     return err_msg or all_recs
 
@@ -764,6 +763,7 @@ def _strip_err_msg(error_msg: str) -> str:
     return error_msg[pos1: max(pos2, pos3)]
 
 
+# pylint: disable=pointless-string-statement
 '''
 class OldGuestSearchResponse(SihotXmlParser):
     def __init__(self, cae, ret_elem_names=None, key_elem_name=None):
@@ -849,7 +849,7 @@ class OldGuestSearchResponse(SihotXmlParser):
 class FldMapXmlParser(SihotXmlParser):
     """ extended xml parser converting data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp, elem_map):
-        super(FldMapXmlParser, self).__init__(cae)
+        super().__init__(cae)
         self._elem_map = elem_map
         self._collected_fields: List[_Field] = []
         self._current_data = ''
@@ -877,7 +877,7 @@ class FldMapXmlParser(SihotXmlParser):
 
     def start(self, tag: str, attrib: Dict[str, str]) -> Optional[str]:
         """ process start of new xml element. """
-        super(FldMapXmlParser, self).start(tag, attrib)
+        super().start(tag, attrib)
         self._collected_fields = self._rec.collect_system_fields(self._elem_path, ELEM_PATH_SEP)
         if self._collected_fields:
             self._current_data = ''
@@ -887,7 +887,7 @@ class FldMapXmlParser(SihotXmlParser):
 
     def data(self, data: str) -> Optional[str]:
         """ process data of xml element. """
-        super(FldMapXmlParser, self).data(data)
+        super().data(data)
         if self._collected_fields:
             self._current_data += data
             return None
@@ -895,7 +895,7 @@ class FldMapXmlParser(SihotXmlParser):
 
     def end(self, tag: str) -> Optional[str]:
         """ process end of xml element. """
-        msg = "FldMapXmlParser.end({}) ".format(tag)
+        msg = f"FldMapXmlParser.end({tag}) "
         for col_field in self._collected_fields:
             idx_path = col_field.root_idx(system=SDI_SH, direction=FAD_FROM)
             if idx_path:
@@ -903,9 +903,9 @@ class FldMapXmlParser(SihotXmlParser):
                 val = self._current_data
                 # fix Sihot bug sending sometimes a value of 1 (greater 0) within ROOM-SEQ|ResPersons.<N>.RoomSeq
                 if len(curr_idx) == 3 and curr_idx[2] == 'PERSON.ROOM-SEQ' and val != '0':
-                    self.cae.dpo(msg + "auto-correction of {} RoomSeq value {!r} to '0'".format(curr_idx, val))
+                    self.cae.dpo(f"{msg}auto-correction of {curr_idx} RoomSeq value {val!r} to '0'")
                     val = '0'
-                self.cae.dpo(msg + "setting field {} to {!r}".format(curr_idx, val))
+                self.cae.dpo(f"{msg}setting field {curr_idx} to {val!r}")
                 self._rec.set_val(val, *curr_idx, system=SDI_SH, direction=FAD_FROM)
         self._collected_fields = []
 
@@ -913,13 +913,13 @@ class FldMapXmlParser(SihotXmlParser):
             if elem_name == '/' + tag:
                 self._rec.set_current_system_index(tag, ELEM_PATH_SEP)
 
-        return super(FldMapXmlParser, self).end(tag)
+        return super().end(tag)
 
 
 class ClientFromSihot(FldMapXmlParser):
     """ extended xml parser converting client data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp, elem_map=SH_CLIENT_MAP):
-        super(ClientFromSihot, self).__init__(cae, elem_map)
+        super().__init__(cae, elem_map)
         self.client_list = Records()
 
     # XMLParser interface
@@ -931,13 +931,13 @@ class ClientFromSihot(FldMapXmlParser):
             rec.pull(SDI_SH)
             self.client_list.append(rec)
             self.clear_rec()
-        return super(ClientFromSihot, self).end(tag)
+        return super().end(tag)
 
 
 class ResFromSihot(FldMapXmlParser):
     """ extended xml parser converting reservation data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp):
-        super(ResFromSihot, self).__init__(cae, SH_RES_MAP)
+        super().__init__(cae, SH_RES_MAP)
         self.res_list = Records()
 
     # XMLParser interface
@@ -949,9 +949,10 @@ class ResFromSihot(FldMapXmlParser):
             rec.pull(SDI_SH)
             self.res_list.append(rec)
             self.clear_rec()
-        return super(ResFromSihot, self).end(tag)
+        return super().end(tag)
 
 
+# pylint: disable=pointless-string-statement
 '''
 class GuestSearchResponse(FldMapXmlParser):
     def __init__(self, cae, ret_elem_names=None, key_elem_name=None):
@@ -1037,13 +1038,13 @@ class ClientFetch(SihotXmlBuilder):
         rec = None
         err_msg = self.send_to_server(response_parser=ClientFromSihot(self.cae))
         if err_msg or not self.response:
-            return "fetch_client({}) error='{}'".format(obj_id, err_msg or "response is empty")
+            return f"fetch_client({obj_id}) error='{err_msg or 'response is empty'}'"
 
         assert isinstance(self.response, ClientFromSihot)
         if self.response.client_list:
             recs = self.response.client_list
             if len(recs) > 1:
-                self.cae.dpo("fetch_client({}): multiple clients found: {}".format(obj_id, recs))
+                self.cae.dpo(f"fetch_client({obj_id}): multiple clients found: {recs}")
             rec = recs[0].copy(deepness=2, filter_fields=lambda f: f.name() not in field_names if field_names else None)
 
         return err_msg or rec
@@ -1054,6 +1055,7 @@ class ClientSearch(SihotXmlBuilder):
     def __init__(self, cae):
         super().__init__(cae, use_kernel=True)
 
+    # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,too-many-branches
     def search_clients(self, matchcode: str = '', exact_matchcode: bool = True,
                        name: str = '', forename: str = '', surname: str = '',
                        guest_no: str = '', email: str = '', guest_type: str = '',
@@ -1062,7 +1064,7 @@ class ClientSearch(SihotXmlBuilder):
                        ) -> Union[str, list, Records]:
         """ invoke the client search. """
         if kwargs:
-            return "ClientSearch.search_clients() does not support the argument(s)=\n{}".format(ppf(kwargs))
+            return f"ClientSearch.search_clients() does not support the argument(s)=\n{ppf(kwargs)}"
 
         self.beg_xml(operation_code='GUEST-SEARCH')
         search_for = ""
@@ -1096,7 +1098,7 @@ class ClientSearch(SihotXmlBuilder):
 
         err_msg = self.send_to_server(response_parser=ClientFromSihot(self.cae))
         if err_msg or not self.response:
-            return "search_clients() error='{}';\nxml=\n{}\n".format(err_msg or "response not instantiated", self._xml)
+            return f"search_clients() error='{err_msg or 'response not instantiated'}';\nxml=\n{self._xml}\n"
 
         assert isinstance(self.response, ClientFromSihot)
         records = self.response.client_list
@@ -1108,6 +1110,7 @@ class ClientSearch(SihotXmlBuilder):
 
         return records
 
+    # pylint: disable=pointless-string-statement
     '''
     def search_clients_old(self, search_for, ret_elem_names, key_elem_name=None):
         """ return dict with search element/attribute value as the dict key if len(ret_elem_names)==1 and if
@@ -1141,7 +1144,7 @@ class ClientSearch(SihotXmlBuilder):
 
         cnt = len(ids_or_err)
         if cnt > 1:
-            self.cae.dpo("client_id_by_matchcode({}): multiple clients found".format(matchcode))
+            self.cae.dpo(f"client_id_by_matchcode({matchcode}): multiple clients found")
         if cnt:
             return ids_or_err[0]
         return None
@@ -1149,6 +1152,7 @@ class ClientSearch(SihotXmlBuilder):
 
 class ResFetch(SihotXmlBuilder):
     """ fetch reservation. """
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def fetch_res(self, ho_id: str, gds_no: str = '', res_id: str = '', sub_id: str = '', scope: str = 'USEISODATE'
                   ) -> Union[str, Record]:
         """ invoke request and fetch of reservation data. """
@@ -1168,11 +1172,11 @@ class ResFetch(SihotXmlBuilder):
         # WEB interface return codes (RC): 29==res not found, 1==internal error - see 14.3.5 in WEB interface doc
 
         if err_msg or not self.response:
-            return "fetch_res({}) error='{}'".format(self._xml, err_msg or "response is empty")
+            return f"fetch_res({self._xml}) error='{err_msg or 'response is empty'}'"
 
         assert isinstance(self.response, ResFromSihot)
         if len(self.response.res_list) > 1:
-            self.cae.dpo("fetch_res({}): multiple reservations found".format(self._xml))
+            self.cae.dpo(f"fetch_res({self._xml}): multiple reservations found")
 
         return err_msg or self.response.res_list[0]
 
@@ -1187,6 +1191,7 @@ class ResFetch(SihotXmlBuilder):
 
 class ResSearch(SihotXmlBuilder):
     """ search reservation. """
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def search_res(self, hotel_id: str = '',
                    from_date: datetime.date = datetime.date.today(), to_date: datetime.date = datetime.date.today(),
                    matchcode: str = '', name: str = '', gds_no: str = '',
@@ -1224,7 +1229,7 @@ class ResSearch(SihotXmlBuilder):
         #     5  == An (internal) error occurred when searching for reservations.
         err_msg = self.send_to_server(response_parser=ResFromSihot(self.cae))
         if err_msg or not self.response:
-            return "search_res() error='{}';\nxml=\n{}".format(err_msg or "response is empty", self._xml)
+            return f"search_res() error='{err_msg or 'response is empty'}';\nxml=\n{self._xml}"
 
         assert isinstance(self.response, ResFromSihot)
         return self.response.res_list
@@ -1234,10 +1239,10 @@ class FldMapXmlBuilder(SihotXmlBuilder):
     """ extended xml builder base class. """
     def __init__(self, cae: ConsoleApp, use_kernel: bool = False, elem_map=None):
         super().__init__(cae, use_kernel=use_kernel)
-        self.elem_map = deepcopy(elem_map or cae.get_opt(SDF_SH_RES_MAP))
+        self.elem_map = deepcopy(elem_map or cae.get_option(SDF_SH_RES_MAP))
 
         self.action = ''
-        self._warning_frags = self.cae.get_var('warningFragments') or []  # list of warning text fragments
+        self._warning_frags = self.cae.get_variable('warningFragments') or []  # list of warning text fragments
         self._warning_msgs: List[str] = []
 
     def get_warnings(self) -> str:
@@ -1257,17 +1262,18 @@ class FldMapXmlBuilder(SihotXmlBuilder):
         rec.clear_leaves(reset_lists=False)    # reestablish default values - leave ResPersons occupants list untouched
         rec.merge_leaves(ori_rec)    # , extend=False)
 
+    # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     def prepare_map_xml(self, rec: Record, include_empty_values: bool = True) -> str:
         """ prepare and return xml string. """
         self.prepare_rec(rec)
-        rec.push(SDI_SH)        # TODO: maybe REMOVE the other/1st push (2nd push could increment ResAdults value)
+        rec.push(SDI_SH)        # maybe REMOVE the other/1st push (2nd push could increment ResAdults value)
         rec.action = self.action or ACTION_BUILD
 
         recs = None
         inner_xml = ''
         map_i = group_i = -1
         indent = 0
-        while True:
+        while True:     # pylint: disable=too-many-nested-blocks
             map_i += 1
             if map_i >= len(self.elem_map):
                 break
@@ -1300,7 +1306,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                     val = val(field)
                 filter_fields = elem_map_item[MTI_FLD_FILTER] if len(elem_map_item) > MTI_FLD_FILTER else None
             if filter_fields:
-                assert callable(filter_fields), "filter aspect {} has to be a callable".format(filter_fields)
+                assert callable(filter_fields), f"filter aspect {filter_fields} has to be a callable"
                 if filter_fields(field):
                     continue
 
@@ -1343,8 +1349,8 @@ class ClientToSihot(FldMapXmlBuilder):
     """ extended xml builder class to send/push client data to Sihot. """
     def __init__(self, cae):
         super().__init__(cae,
-                         use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_CLIENT),
-                         elem_map=cae.get_opt(SDF_SH_CLIENT_MAP) or SH_CLIENT_MAP)
+                         use_kernel=cae.get_option(SDF_SH_USE_KERNEL_FOR_CLIENT),
+                         elem_map=cae.get_option(SDF_SH_CLIENT_MAP) or SH_CLIENT_MAP)
 
     @staticmethod
     def _complete_client_data(rec: Record):
@@ -1363,7 +1369,7 @@ class ClientToSihot(FldMapXmlBuilder):
         self.beg_xml(operation_code='GUEST-CHANGE' if self.action == ACTION_UPDATE else 'GUEST-CREATE')
         self.add_tag('GUEST-PROFILE', self.prepare_map_xml(rec))
         self.end_xml()
-        self.cae.vpo("ClientToSihot._prepare_guest_xml() action={} rec={}".format(self.action, rec))
+        self.cae.vpo(f"ClientToSihot._prepare_guest_xml() action={self.action} rec={rec}")
 
     def _prepare_guest_link_xml(self, mc1: str, mc2: str):
         """ prepare guest links. """
@@ -1374,7 +1380,7 @@ class ClientToSihot(FldMapXmlBuilder):
         self.beg_xml(operation_code='GUEST-CONTACT')
         self.add_tag('CONTACTLIST', mct1 + mct2)
         self.end_xml()
-        self.cae.vpo("ClientToSihot._prepare_guest_link_xml(): mc1={} mc2={}".format(mc1, mc2))
+        self.cae.vpo(f"ClientToSihot._prepare_guest_link_xml(): mc1={mc1} mc2={mc2}")
 
     def _send_link_to_sihot(self, pk1: str, pk2: str) -> str:
         self._prepare_guest_link_xml(pk1, pk2)
@@ -1394,13 +1400,13 @@ class ClientToSihot(FldMapXmlBuilder):
 
     def send_client_to_sihot(self, rec: Record) -> str:
         """ send client data to Sihot. """
-        msg = "ClientToSihot.send_client_to_sihot({}): action={}".format(rec, self.action)
+        msg = f"ClientToSihot.send_client_to_sihot({rec}): action={self.action}"
         err_msg = self._send_person_to_sihot(rec)
         if err_msg:
-            self.cae.dpo(msg + "; err='{}'".format(err_msg))
+            self.cae.dpo(f"{msg}; err='{err_msg}'")
         else:
-            self.cae.vpo(msg + "; client={} RESPONDED OBJID={} MATCHCODE={}"
-                         .format(rec.val('AcuId'), self.response.objid, self.response.matchcode))
+            self.cae.vpo(f"{msg}; client={rec.val('AcuId')} RESPONDED OBJID={self.response.objid}"
+                         f" MATCHCODE={self.response.matchcode}")
 
         return err_msg
 
@@ -1409,8 +1415,8 @@ class ResToSihot(FldMapXmlBuilder):
     """ extended xml builder to send reservation data to Sihot. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae,
-                         use_kernel=cae.get_opt(SDF_SH_USE_KERNEL_FOR_RES),
-                         elem_map=cae.get_var(SDF_SH_RES_MAP) or SH_RES_MAP)
+                         use_kernel=cae.get_option(SDF_SH_USE_KERNEL_FOR_RES),
+                         elem_map=cae.get_variable(SDF_SH_RES_MAP) or SH_RES_MAP)
         self._gds_errors: Dict[str, Tuple[Record, str]] = {}
         self._in_error_handling = False
 
@@ -1419,7 +1425,7 @@ class ResToSihot(FldMapXmlBuilder):
         hotel_id = rec.val('ResHotelId', system='', direction='')
         arr_date = rec.val('ResArrival', system='', direction='')   # system/direction needed to get date type
         today = datetime.datetime.today()
-        get_var = self.cae.get_var
+        get_var = self.cae.get_variable
         extra_comments = []
 
         if self.action != ACTION_DELETE and rec.val('ResStatus', system='', direction='') != 'S':
@@ -1429,7 +1435,7 @@ class ResToSihot(FldMapXmlBuilder):
                 if arr_date and arr_date.toordinal() > today.toordinal():
                     rec.set_val(val, 'ResStatus', system='', direction='')
                 else:
-                    extra_comments.append("RT={}".format(val))
+                    extra_comments.append(f"RT={val}")
 
         val = get_var(mkt_seg + '_' + hotel_id, section='SihotAllotments',
                       default_value=get_var(mkt_seg, section='SihotAllotments'))
@@ -1437,7 +1443,7 @@ class ResToSihot(FldMapXmlBuilder):
             if arr_date and arr_date.toordinal() > today.toordinal():
                 rec.set_val(val, 'ResAllotmentNo', system='', direction='')
             else:   # Sihot doesn't accept allotment for reservations in the past
-                extra_comments.append("AllotNo={}".format(val))
+                extra_comments.append(f"AllotNo={val}")
 
         # not specified? FYI: this field is not included in V_ACU_RES_DATA, default==RUL_SIHOT_RATE/SIHOT_MKT_SEG
         rate_seg = rec.val('ResRateSegment', system='', direction='') or mkt_seg
@@ -1473,7 +1479,7 @@ class ResToSihot(FldMapXmlBuilder):
         else:
             self.beg_xml(operation_code='RES', add_inner_xml=inner_xml)
         self.end_xml()
-        self.cae.vpo("ResToSihot._prepare_res_xml(): action={}; rec=\n{}".format(self.action, ppf(rec)))
+        self.cae.vpo(f"ResToSihot._prepare_res_xml(): action={self.action}; rec=\n{ppf(rec)}")
 
     def _sending_res_to_sihot(self, rec: Record) -> str:
         self._prepare_res_xml(rec)
@@ -1487,17 +1493,17 @@ class ResToSihot(FldMapXmlBuilder):
             if not obj_id:
                 rec.set_val(self.response.objid, 'ResObjId')
             elif obj_id != self.response.objid and self.response.objid:
-                self._warning_msgs.append("ResObjId mismatch: {!r} != {!r}".format(obj_id, self.response.objid))
+                self._warning_msgs.append(f"ResObjId mismatch: {obj_id!r} != {self.response.objid!r}")
             res_id = rec.val('ResId')
             if not res_id:
                 rec.set_val(self.response.res_nr, 'ResId')
             elif res_id != self.response.res_nr and self.response.res_nr:
-                self._warning_msgs.append("ResId mismatch: {!r} != {!r}".format(res_id, self.response.res_nr))
+                self._warning_msgs.append(f"ResId mismatch: {res_id!r} != {self.response.res_nr!r}")
             sub_id = rec.val('ResSubId')
             if not sub_id:
                 rec.set_val(self.response.sub_nr, 'ResSubId')
             elif sub_id != self.response.sub_nr and self.response.sub_nr:
-                self._warning_msgs.append("ResSubId mismatch: {!r} != {!r}".format(sub_id, self.response.sub_nr))
+                self._warning_msgs.append(f"ResSubId mismatch: {sub_id!r} != {self.response.sub_nr!r}")
 
         return err_msg
 
@@ -1529,11 +1535,11 @@ class ResToSihot(FldMapXmlBuilder):
                 del_rec.set_env(system=SDI_SH, direction=FAD_ONTO)
                 del_rec.set_val(ACTION_DELETE, 'ResAction')
                 err_msg = self._sending_res_to_sihot(del_rec)
-            except Exception as ex:
+            except Exception as ex:     # pylint: disable=broad-exception-caught
                 err_msg = msg.format(f"Exception {ex} occurred in deletion of orphan res")
             finally:
                 self._in_error_handling = False
-            self.cae.dpo("    .. orphan res deletion; obj-id={}; ignorable err?={}".format(obj_id, err_msg))
+            self.cae.dpo(f"    .. orphan res deletion; obj-id={obj_id}; ignorable err?={err_msg}")
             rec['ResObjId'] = ''        # resend with wiped orphan/invalid obj_id, using ResHotelId+ResGdsNo instead
             err_msg = self._sending_res_to_sihot(rec)
 
@@ -1577,6 +1583,7 @@ class ResToSihot(FldMapXmlBuilder):
 
     def send_res_to_sihot(self, rec: Record, ensure_client_mode: int = ECM_ENSURE_WITH_ERRORS) -> str:
         """ send reservation to Sihot system. """
+        msg = "ResToSihot.send_res_to_sihot(): "
         req_fields: Tuple[Union[str, Tuple[str, ...]], ...] = (
             'ResHotelId', ('ResGdsNo', 'ResId', 'ResObjId'), 'ResMktSegment', 'ResRoomCat', 'ResArrival',
             'ResDeparture')
@@ -1586,7 +1593,7 @@ class ResToSihot(FldMapXmlBuilder):
             req_fields += (('ShId', 'AcuId', 'Surname'), )
         missing = rec.missing_fields(req_fields)
         if missing:
-            return "ResToSihot.send_res_to_sihot() expects non-empty value in fields {}; rec=\n{}".format(missing, rec)
+            return f"{msg}expects non-empty value in fields {missing}; rec=\n{rec}"
 
         err_msg = ""
         gds_no = rec.val('ResGdsNo')
@@ -1602,14 +1609,14 @@ class ResToSihot(FldMapXmlBuilder):
             if not err_msg:
                 err_msg = self._sending_res_to_sihot(rec)
         else:
-            err_msg = self.res_id_desc(rec, "ResToSihot.send_res_to_sihot(): sync with empty GDS number skipped")
+            err_msg = self.res_id_desc(rec, f"{msg}sync with empty GDS number skipped")
 
         warn_msg = self.get_warnings()
         if err_msg:
-            self.cae.po("ResToSihot.send_res_to_sihot() error={}; warnings={}".format(err_msg, warn_msg))
+            self.cae.po(f"{msg}error={err_msg}; warnings={warn_msg}")
         else:
-            self.cae.dpo("ResToSihot.send_res_to_sihot() GDSNO={} RESPONDED OBJID={} MATCHCODE={} warnings={}"
-                         .format(gds_no, self.response.objid, self.response.matchcode, warn_msg))
+            self.cae.dpo(f"{msg}GDSNO={gds_no} RESPONDED OBJID={self.response.objid}"
+                         f" MATCHCODE={self.response.matchcode} warnings={warn_msg}")
 
         return err_msg
 
@@ -1674,7 +1681,7 @@ class BulkFetcherBase:
 
     def load_options(self):
         """ load command line option. """
-        self.debug_level = self.cae.get_opt('debug_level')
+        self.debug_level = self.cae.get_option('debug_level')
 
     def print_options(self):
         """ print command line option to console output. """
@@ -1694,18 +1701,18 @@ class GuestBulkFetcher(BulkFetcherBase):
         try:
             # MATCH-SM (holding the Salesforce/SF client ID) is not available in Kernel GUEST-SEARCH (only GUEST-GET)
             self.all_recs = ClientSearch(cae).search_clients(order_by='GUEST-NR', limit=600000)
-        except Exception as ex:
-            cae.po(" ***  Sihot interface guest bulk fetch exception: {}".format(ex))
+        except Exception as ex:     # pylint: disable=broad-exception-caught
+            cae.po(f" ***  Sihot interface guest bulk fetch exception: {ex}")
             print_exc()
             cae.shutdown(2130)
 
         return self.all_recs
 
 
-class ResBulkFetcher(BulkFetcherBase):
+class ResBulkFetcher(BulkFetcherBase):  # pylint: disable=too-many-instance-attributes
     """ reservation bulk fetch. """
     def __init__(self, cae: ConsoleApp, allow_future_arrivals: bool = True):
-        super(ResBulkFetcher, self).__init__(cae, add_kernel_port=False)
+        super().__init__(cae, add_kernel_port=False)
 
         self.allow_future_arrivals = allow_future_arrivals
 
@@ -1722,41 +1729,39 @@ class ResBulkFetcher(BulkFetcherBase):
 
     def add_options(self):
         """ add command line options. """
-        super(ResBulkFetcher, self).add_options()
-        self.cae.add_opt('dateFrom', "Date of first arrival", self.startup_date - datetime.timedelta(days=1), 'F')
-        self.cae.add_opt('dateTill', "Date of last arrival", self.startup_date - datetime.timedelta(days=1), 'T')
+        super().add_options()
+        self.cae.add_option('dateFrom', "First arrival", self.startup_date - datetime.timedelta(days=1), short_opt='F')
+        self.cae.add_option('dateTill', "Last arrival", self.startup_date - datetime.timedelta(days=1), short_opt='T')
 
     def load_options(self):
         """ load command line options. """
-        super(ResBulkFetcher, self).load_options()
+        super().load_options()
 
         cae = self.cae
-        self.date_from: datetime.date = cae.get_opt('dateFrom')
-        self.date_till: datetime.date = cae.get_opt('dateTill')
+        self.date_from: datetime.date = cae.get_option('dateFrom')
+        self.date_till: datetime.date = cae.get_option('dateTill')
         if self.date_from > self.date_till:
-            cae.po("Specified date range is invalid - dateFrom({}) has to be before dateTill({})."
-                   .format(self.date_from, self.date_till))
+            cae.po(f"Invalid date range - dateFrom({self.date_from}) has to be before dateTill({self.date_till}).")
             cae.shutdown(3318)
         elif not self.allow_future_arrivals and self.date_till > self.startup_date:
-            cae.po("Future arrivals cannot be migrated - dateTill({}) has to be before {}."
-                   .format(self.date_till, self.startup_date))
+            cae.po(f"Future arrivals not migratable - dateTill({self.date_till}) has to be before {self.startup_date}")
             cae.shutdown(3319)
 
         # fetch given date range in chunks to prevent timeouts and Sihot server blocking issues
-        self.max_length_of_stay = min(max(1, cae.get_var('shFetchMaxDays', default_value=7)), 31)
-        self.fetch_chunk_pause_seconds = cae.get_var('shFetchPauseSeconds', default_value=1)
+        self.max_length_of_stay = min(max(1, cae.get_variable('shFetchMaxDays', default_value=7)), 31)
+        self.fetch_chunk_pause_seconds = cae.get_variable('shFetchPauseSeconds', default_value=1)
 
-        self.search_flags = cae.get_var('ResSearchFlags', default_value='ALL-HOTELS')
-        self.search_scope = cae.get_var('ResSearchScope', default_value='NOORDERER;NORATES;NOPERSTYPES')
+        self.search_flags = cae.get_variable('ResSearchFlags', default_value='ALL-HOTELS')
+        self.search_scope = cae.get_variable('ResSearchScope', default_value='NOORDERER;NORATES;NOPERSTYPES')
 
-        self.allowed_mkt_src = cae.get_var('MarketSources', default_value=[])
-        self.allowed_mkt_grp = cae.get_var('MarketGroups', default_value=[])
+        self.allowed_mkt_src = cae.get_variable('MarketSources', default_value=[])
+        self.allowed_mkt_grp = cae.get_variable('MarketGroups', default_value=[])
 
-        self.adult_pers_types = cae.get_var('shAdultPersTypes')
+        self.adult_pers_types = cae.get_variable('shAdultPersTypes')
 
     def print_options(self):
         """ print command line options. """
-        super(ResBulkFetcher, self).print_options()
+        super().print_options()
 
         cae = self.cae
         cae.po("Date range including check-ins from", self.date_from.strftime(SH_DATE_FORMAT),
@@ -1791,22 +1796,22 @@ class ResSender(ResToSihot):
         msg = ""
         try:
             err = self.send_res_to_sihot(rec, ensure_client_mode=ECM_DO_NOT_SEND_CLIENT)
-        except Exception as ex:
-            err = "ResSender.send_rec() exception: {}".format(full_stack_trace(ex))
+        except Exception as ex:     # pylint: disable=broad-exception-caught
+            err = f"ResSender.send_rec() exception: {full_stack_trace(ex)}"
         if err:
             if err.startswith(ERR_MESSAGE_PREFIX_CONTINUE):
-                msg = "Ignoring error '{}' in sending res-rec {}; WARNINGS={}".format(err, rec, self.get_warnings())
+                msg = f"Ignoring error '{err}' in sending res-rec {rec}; WARNINGS={self.get_warnings()}"
                 err = ""
             elif 'setDataRoom not available!' in err:  # was: 'A_Persons::setDataRoom not available!'
-                err = "Apartment {} occupied between {} and {} - created GDS-No {} for manual allocation." \
-                    .format(rec.val('ResRoomNo'), rec.val('ResArrival'), rec.val('ResDeparture'), rec.val('ResGdsNo')) \
-                      + (" Original error: {}; WARNINGS={}".format(err, self.get_warnings())
-                         if self.debug_level >= DEBUG_LEVEL_ENABLED else "")
+                err = (f"Apartment {rec.val('ResRoomNo')} occupied between {rec.val('ResArrival')}"
+                       f" and {rec.val('ResDeparture')} - created GDS-No {rec.val('ResGdsNo')} for manual allocation."
+                       ) + (f" Original error: {err}; WARNINGS={self.get_warnings()}"
+                            if self.debug_level >= DEBUG_LEVEL_ENABLED else "")
         elif self.debug_level >= DEBUG_LEVEL_ENABLED:
             msg = "Sent res: " + str(rec)
         warn_msg = self.get_warnings()
         if warn_msg:
-            msg += "\nwarnings={}".format(warn_msg)
+            msg += f"\nwarnings={warn_msg}"
         return err, msg
 
     def get_res_no(self) -> tuple:
