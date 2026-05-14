@@ -23,7 +23,8 @@ from textwrap import wrap
 import pprint
 from typing import Union, Tuple, Optional, Any, Dict, List, Sequence, Iterator
 
-from ae.base import DATE_ISO, full_stack_trace                                              # type: ignore
+from ae.base import DATE_ISO                                                                # type: ignore
+from ae.system import full_stack_trace                                                      # type: ignore
 from ae.parse_date import parse_date                                                        # type: ignore
 from ae.core import DEBUG_LEVEL_ENABLED                                                     # type: ignore
 from ae.console import ConsoleApp                                                           # type: ignore
@@ -41,7 +42,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.3.9'
+__version__ = '0.3.10'
 
 
 FORE_SURNAME_SEP = ' '
@@ -190,7 +191,7 @@ SH_RES_MAP = \
         # ('GUEST-ID', 'ShId', None,
         #  lambda f: not f.rfv('ShId')},
         ('RESERVATION' + ELEM_PATH_SEP + 'GUEST-ID', 'ShId'),   # , None, lambda f: not f.val()),
-        # GUEST-OBJID used in SS/RES-SEARCH responses instead of GUEST-ID for parsing orderer - always hide in xml build
+        # GUEST-OBJID used in SS/RES-SEARCH responses instead of GUEST-ID for parsing orderer - always hide in XML build
         ('RESERVATION' + ELEM_PATH_SEP + 'GUEST-OBJID', 'ShId'),
         ('RESERVATION' + ELEM_PATH_SEP + 'MATCHCODE', 'AcuId'),
         ('RESERVATION' + ELEM_PATH_SEP + 'NAME', 'Surname'),
@@ -252,10 +253,10 @@ SH_RES_MAP = \
          lambda f: f.ina(ACTION_DELETE) or f.rfv('ResMktSegment') not in ('ER', )),
         # The following fallback rate results in error Package TO not valid for hotel 1
         # ('RATE/', ),
-        # ('R', 'RO_SIHOT_RATE'},
+        # ('R', 'RO_SIHOT_RATE'),
         # ('ISDEFAULT', None, 'N'),
         # ('/RATE', ),
-        # ### Reservation Channels - used for assignment of reservation to a allotment or to board payment
+        # ### Reservation Channels - used for assignment of reservation to an allotment or to board payment
         ('RESCHANNELLIST/', None, None,
          lambda f: not f.rfv('ResAllotmentNo') or f.rfv('ResMktGroup') not in ('OW', 'FB', 'RE', 'RI')),
         ('RESCHANNEL/', None, None,
@@ -298,7 +299,7 @@ SH_RES_MAP = \
         ('NOPAX', 'ResAdults', None,          # NOPAX is sum of adults + children
          None,
          # converters: FROM-converter has to use system value because field value could still be unset by field.pull()
-         # .. additional: NOCHILDS can be omitted in Sihot xml response - therefore use '0' as default
+         # .. additional: NOCHILDS can be omitted in Sihot XML response - therefore use '0' as default
          # lambda f, v: int(v) if v else 2,
          lambda f, v: int(v) - int(f.srv('ResChildren', system=SDI_SH, direction=FAD_FROM) or '0') if v else 2,
          # lambda f, v: str(v + f.rfv('ResChildren'))),
@@ -508,7 +509,7 @@ def complete_res_data(rec: Record) -> Record:   # pylint: disable=too-many-local
         optional fields:
             ResPersons0PersSurname and ResPersons0PersForename (surname and forename)
             ResPersons1PersSurname and ResPersons1PersForename ( ... )
-        optional auto-populated fields:
+        optional autopopulated fields:
             see the default values - specified in default_values dict underneath.
         """
     default_values = {'ResStatus': '1',
@@ -739,7 +740,7 @@ def obj_id_to_res_no(cae: ConsoleApp, obj_id: str) -> tuple:
     """ using RESERVATION-GET oc from KERNEL interface (see 7.3 in SIHOT KERNEL interface doc).
 
     :param cae:         Console App Environment instance.
-    :param obj_id:      Sihot Reservation Object Id.
+    :param obj_id:      Sihot Reservation Object ID.
     :return:            reservation ids as tuple of (hotel_id, res_id, sub_id, gds_no) or (None, "error") if not found
     """
     if not obj_id:
@@ -847,7 +848,7 @@ class OldGuestSearchResponse(SihotXmlParser):
 
 
 class FldMapXmlParser(SihotXmlParser):
-    """ extended xml parser converting data directly into a sys data Record structure. """
+    """ extended XML parser converting data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp, elem_map):
         super().__init__(cae)
         self._elem_map = elem_map
@@ -876,7 +877,7 @@ class FldMapXmlParser(SihotXmlParser):
     # XMLParser interface
 
     def start(self, tag: str, attrib: Dict[str, str]) -> Optional[str]:
-        """ process start of new xml element. """
+        """ process start of new XML element. """
         super().start(tag, attrib)
         self._collected_fields = self._rec.collect_system_fields(self._elem_path, ELEM_PATH_SEP)
         if self._collected_fields:
@@ -894,7 +895,7 @@ class FldMapXmlParser(SihotXmlParser):
         return data
 
     def end(self, tag: str) -> Optional[str]:
-        """ process end of xml element. """
+        """ process end of XML element. """
         msg = f"FldMapXmlParser.end({tag}) "
         for col_field in self._collected_fields:
             idx_path = col_field.root_idx(system=SDI_SH, direction=FAD_FROM)
@@ -917,7 +918,7 @@ class FldMapXmlParser(SihotXmlParser):
 
 
 class ClientFromSihot(FldMapXmlParser):
-    """ extended xml parser converting client data directly into a sys data Record structure. """
+    """ extended XML parser converting client data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp, elem_map=SH_CLIENT_MAP):
         super().__init__(cae, elem_map)
         self.client_list = Records()
@@ -925,7 +926,7 @@ class ClientFromSihot(FldMapXmlParser):
     # XMLParser interface
 
     def end(self, tag: str) -> Optional[str]:
-        """ process end of xml element. """
+        """ process end of XML element. """
         if tag == 'GUEST-PROFILE':
             rec = self._rec.copy(deepness=-1)
             rec.pull(SDI_SH)
@@ -935,7 +936,7 @@ class ClientFromSihot(FldMapXmlParser):
 
 
 class ResFromSihot(FldMapXmlParser):
-    """ extended xml parser converting reservation data directly into a sys data Record structure. """
+    """ extended XML parser converting reservation data directly into a sys data Record structure. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae, SH_RES_MAP)
         self.res_list = Records()
@@ -943,7 +944,7 @@ class ResFromSihot(FldMapXmlParser):
     # XMLParser interface
 
     def end(self, tag: str) -> Optional[str]:
-        """ process end of xml element. """
+        """ process end of XML element. """
         if tag == 'RESERVATION':
             rec = complete_res_data(self._rec.copy(deepness=-1))
             rec.pull(SDI_SH)
@@ -1025,7 +1026,7 @@ class GuestSearchResponse(FldMapXmlParser):
 
 
 class ClientFetch(SihotXmlBuilder):
-    """ build xml and send to the Sihot system to fetch a client record. """
+    """ build XML and send to the Sihot system to fetch a client record. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae, use_kernel=True)
 
@@ -1216,7 +1217,7 @@ class ResSearch(SihotXmlBuilder):
             self.add_tag('SCOPE', scope)  # e.g. EXPORTEXTENDEDCOMMENT;FORCECALCDAYPRICE;CALCSUMDAYPRICE
         if guest_id:
             # ask Gubse to implement/fix guest_id search/filter option on RES-SEARCH operation of Sihot WEB interface.
-            self.add_tag('CENTRAL-GUEST-ID', guest_id)  # this is not filtering nothing (tried GID)
+            self.add_tag('CENTRAL-GUEST-ID', guest_id)  # this is not filtering anything (tried GID)
         self.end_xml()
 
         # 20.5 Return Codes (RC):
@@ -1236,7 +1237,7 @@ class ResSearch(SihotXmlBuilder):
 
 
 class FldMapXmlBuilder(SihotXmlBuilder):
-    """ extended xml builder base class. """
+    """ extended XML builder base class. """
     def __init__(self, cae: ConsoleApp, use_kernel: bool = False, elem_map=None):
         super().__init__(cae, use_kernel=use_kernel)
         self.elem_map = deepcopy(elem_map or cae.get_option(SDF_SH_RES_MAP))
@@ -1264,7 +1265,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
     # pylint: disable=too-many-branches,too-many-statements,too-many-locals
     def prepare_map_xml(self, rec: Record, include_empty_values: bool = True) -> str:
-        """ prepare and return xml string. """
+        """ prepare and return XML string. """
         self.prepare_rec(rec)
         rec.push(SDI_SH)        # maybe REMOVE the other/1st push (2nd push could increment ResAdults value)
         rec.action = self.action or ACTION_BUILD
@@ -1346,7 +1347,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
 
 class ClientToSihot(FldMapXmlBuilder):
-    """ extended xml builder class to send/push client data to Sihot. """
+    """ extended XML builder class to send/push client data to Sihot. """
     def __init__(self, cae):
         super().__init__(cae,
                          use_kernel=cae.get_option(SDF_SH_USE_KERNEL_FOR_CLIENT),
@@ -1412,7 +1413,7 @@ class ClientToSihot(FldMapXmlBuilder):
 
 
 class ResToSihot(FldMapXmlBuilder):
-    """ extended xml builder to send reservation data to Sihot. """
+    """ extended XML builder to send reservation data to Sihot. """
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae,
                          use_kernel=cae.get_option(SDF_SH_USE_KERNEL_FOR_RES),
@@ -1572,7 +1573,7 @@ class ResToSihot(FldMapXmlBuilder):
                         break
                     sent_clients.append(crc.val('AcuId'))
                     if crc.val('ShId') and not rec.val('ShId') and crc.val('AcuId') == rec.val('AcuId'):
-                        rec.set_val(crc.val('ShId'), 'ShId')     # pass new Guest Object Id to orderer
+                        rec.set_val(crc.val('ShId'), 'ShId')     # pass new Guest Object ID to orderer
 
         # check also Orderer but exclude OTAs like TCAG/TCRENT with a MATCHCODE that is no normal Acumen-CDREF
         if not err_msg and rec.val('AcuId') and len(rec.val('AcuId')) == 7 and rec.val('AcuId') not in sent_clients:
