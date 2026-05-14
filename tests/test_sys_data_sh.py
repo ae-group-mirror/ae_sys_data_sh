@@ -48,8 +48,8 @@ class TestResToSihot:
                           ResDeparture=datetime.date(year=2019, month=12, day=30),
                           ResAdults=1, ResChildren=1, ResRoomCat='1JNS', ResMktSegment='TO',
                           )
-        err_msg = res_to.send_res_to_sihot(rec=Record(fields=fld_values), ensure_client_mode=ECM_DO_NOT_SEND_CLIENT)
-        # assert not err_msg
+        _err_msg = res_to.send_res_to_sihot(rec=Record(fields=fld_values), ensure_client_mode=ECM_DO_NOT_SEND_CLIENT)
+        # assert not _err_msg
         # assert not res_to.get_warnings()
 
     def test_rate_amount_update(self, cons_app):
