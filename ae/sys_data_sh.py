@@ -16,24 +16,25 @@ TODO:
 """
 # pylint: disable=too-many-lines
 import datetime
+import pprint
 import time
-from traceback import format_exc, print_exc
+
+from collections.abc import Iterator, Sequence
 from copy import deepcopy
 from textwrap import wrap
-import pprint
-from typing import Union, Tuple, Optional, Any, Dict, List, Sequence, Iterator
+from traceback import format_exc, print_exc
+from typing import Any
 
-from ae.base import DATE_ISO                                                                # type: ignore
+from ae.base import DATE_ISO, parse_date                                                    # type: ignore
 from ae.system import full_stack_trace                                                      # type: ignore
-from ae.parse_date import parse_date                                                        # type: ignore
 from ae.core import DEBUG_LEVEL_ENABLED                                                     # type: ignore
 from ae.console import ConsoleApp                                                           # type: ignore
 # noinspection PyProtectedMember
 from ae.sys_data import (                                                                   # type: ignore
     ACTION_INSERT, ACTION_UPDATE, ACTION_DELETE, ACTION_SEARCH, ACTION_BUILD,
-    FAT_IDX, FAD_FROM, FAD_ONTO, LIST_TYPES, ALL_FIELDS, CALLABLE_SUFFIX,
-    Record, Records, Value, get_current_index, compose_current_index, set_current_index,
-    field_name_idx_path, _Field)
+    FAT_IDX, FAD_FROM, FAD_ONTO, ALL_FIELDS, CALLABLE_SUFFIX,
+    _Field, ListType, Record, Records, Value, compose_current_index, get_current_index,
+    field_name_idx_path, is_type, set_current_index)
 from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlBuilder,     # type: ignore
                             SXML_DEF_ENCODING, ERR_MESSAGE_PREFIX_CONTINUE, SDI_SH,
                             SDF_SH_SERVER_ADDRESS, SDF_SH_KERNEL_PORT, SDF_SH_WEB_PORT,
@@ -42,7 +43,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.3.10'
+__version__ = '0.3.11'
 
 
 FORE_SURNAME_SEP = ' '
@@ -61,14 +62,15 @@ ECM_DO_NOT_SEND_CLIENT = 2
 ppf = pprint.PrettyPrinter(indent=12, width=96, depth=9).pformat
 
 
-def convert_date_from_sh(xml_string: str) -> Union[datetime.date, str]:
+def convert_date_from_sh(xml_string: str) -> datetime.date | str:
     """ convert date string sent by the Sihot system into a datetime.date value. """
+    # noinspection PyTypeChecker
     return parse_date(xml_string, ret_date=True) if xml_string else ''
 
 
 def convert_date_onto_sh(date: datetime.date) -> str:
     """ convert datetime.date value into a date string in the format of the Sihot system. """
-    return (date if isinstance(date, str) else datetime.date.strftime(date, DATE_ISO)) if date else ''
+    return (date if isinstance(date, str) else date.strftime(DATE_ISO)) if date else ''
 
 
 #  ELEMENT-FIELD-MAP-TUPLE-INDEXES  #################################
@@ -81,6 +83,7 @@ MTI_FLD_FILTER = 3
 MTI_FLD_CNV_FROM = 4
 MTI_FLD_CNV_ONTO = 5
 
+# noinspection GrazieInspection
 SH_CLIENT_MAP = \
     (
         ('OBJID', 'ShId', None,
@@ -492,6 +495,7 @@ def client_data(cae: ConsoleApp, obj_id: str) -> Record:
     """
     client_fetch = ClientFetch(cae)
     ret = client_fetch.fetch_client(obj_id)
+    # noinspection PyTypeChecker
     return ret
 
 
@@ -532,16 +536,20 @@ def complete_res_data(rec: Record) -> Record:   # pylint: disable=too-many-local
     if rec.val('ResPersons', system='', direction=''):
         adults = rec.val('ResAdults', system='', direction='')
         pax = adults + rec.val('ResChildren', system='', direction='')
-        root_idx = ('ResPersons',)  # type: Tuple[Union[str, int]]
+        root_idx = ('ResPersons',)  # type: tuple[str | int]
         recs = rec.value('ResPersons', flex_sys_dir=True)
+        # noinspection PyTypeChecker
         recs_len = len(recs)
         if recs_len > pax:
             for _ in range(recs_len - pax):  # remove invalid/surplus occupant recs
+                # noinspection PyUnresolvedReferences
                 recs.pop()
         elif recs_len < pax:
             for _ in range(pax - recs_len):  # add rec, copied from recs[0] and establish init/default field values
+                # noinspection PyUnresolvedReferences
                 recs.append_record(root_rec=rec, root_idx=root_idx)
 
+        # noinspection PyTypeChecker
         for pers_seq, occ_rec in enumerate(recs):
             rix = root_idx + (pers_seq,)
 
@@ -577,7 +585,7 @@ def complete_res_data(rec: Record) -> Record:   # pylint: disable=too-many-local
     return rec
 
 
-def elem_path_join(elem_names: List[str]) -> str:
+def elem_path_join(elem_names: list[str]) -> str:
     """ convert list of element names to element path.
 
     :param elem_names:  list of element names.
@@ -586,7 +594,7 @@ def elem_path_join(elem_names: List[str]) -> str:
     return ELEM_PATH_SEP.join(elem_names)
 
 
-def hotel_and_res_id(shd: Record) -> Tuple[Optional[str], Optional[str]]:
+def hotel_and_res_id(shd: Record) -> tuple[str | None, str | None]:
     """ determine hotel and reservation ids. """
     ho_id = shd.val('ResHotelId')
     res_nr = shd.val('ResId')
@@ -612,7 +620,7 @@ def pax_count(shd: Record) -> int:
 
 
 def date_range_chunks(date_from: datetime.date, date_till: datetime.date, fetch_max_days: int
-                      ) -> Iterator[Tuple[datetime.date, datetime.date]]:
+                      ) -> Iterator[tuple[datetime.date, datetime.date]]:
     """ split date range into manageable chunks respecting the passed maximum days length and yield them back. """
     one_day = datetime.timedelta(days=1)
     add_days = datetime.timedelta(days=fetch_max_days) - one_day
@@ -623,7 +631,7 @@ def date_range_chunks(date_from: datetime.date, date_till: datetime.date, fetch_
         yield chunk_from, chunk_till
 
 
-def gds_no_to_ids(cae: ConsoleApp, hotel_id: str, gds_no: str) -> Dict[str, Any]:
+def gds_no_to_ids(cae: ConsoleApp, hotel_id: str, gds_no: str) -> dict[str, Any]:
     """ determine all reservation ids for a reservation with the passed GDS number. """
     ids = {'ResHotelId': hotel_id, 'ResGdsNo': gds_no}
     rfr = ResFetch(cae).fetch_by_gds_no(hotel_id, gds_no)
@@ -644,7 +652,7 @@ def gds_no_to_obj_id(cae: ConsoleApp, hotel_id: str, gds_no: str) -> str:
     return gds_no_to_ids(cae, hotel_id, gds_no).get('ResObjId', '')
 
 
-def res_no_to_ids(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> Union[str, Dict[str, Any]]:
+def res_no_to_ids(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -> str | dict[str, Any]:
     """ determine all reservation ids for a reservation with the passed reservation number. """
     rfr = ResFetch(cae).fetch_by_res_id(hotel_id, res_id, sub_id)
     if isinstance(rfr, str):
@@ -662,16 +670,17 @@ def res_no_to_obj_id(cae: ConsoleApp, hotel_id: str, res_id: str, sub_id: str) -
     """ determine the Sihot object id of a reservation identified by their reservation number. """
     ret = res_no_to_ids(cae, hotel_id, res_id, sub_id)
     if isinstance(ret, Record):
+        # noinspection PyTypeChecker
         return ret.get('ResObjId')
     return ''
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
-def res_search(cae, date_from: datetime.date, date_till: Optional[datetime.date] = None,
-               mkt_sources: Optional[List[str]] = None, mkt_groups: Optional[List[str]] = None,
+def res_search(cae, date_from: datetime.date, date_till: datetime.date | None = None,
+               mkt_sources: list[str] | None = None, mkt_groups: list[str] | None = None,
                max_los: int = 28,
                search_flags: str = '', search_scope: str = '', chunk_pause: int = 1
-               ) -> Union[str, Records]:
+               ) -> str | Records:
     """ search reservations with the criteria specified by the parameters.
 
     :param cae:             instance of the application environment specifying searched Sihot server.
@@ -852,7 +861,7 @@ class FldMapXmlParser(SihotXmlParser):
     def __init__(self, cae: ConsoleApp, elem_map):
         super().__init__(cae)
         self._elem_map = elem_map
-        self._collected_fields: List[_Field] = []
+        self._collected_fields: list[_Field] = []
         self._current_data = ''
         self.elem_fld_map = None
 
@@ -876,7 +885,7 @@ class FldMapXmlParser(SihotXmlParser):
 
     # XMLParser interface
 
-    def start(self, tag: str, attrib: Dict[str, str]) -> Optional[str]:
+    def start(self, tag: str, attrib: dict[str, str]) -> str | None:
         """ process start of new XML element. """
         super().start(tag, attrib)
         self._collected_fields = self._rec.collect_system_fields(self._elem_path, ELEM_PATH_SEP)
@@ -886,7 +895,7 @@ class FldMapXmlParser(SihotXmlParser):
 
         return tag
 
-    def data(self, data: str) -> Optional[str]:
+    def data(self, data: str) -> str | None:
         """ process data of xml element. """
         super().data(data)
         if self._collected_fields:
@@ -894,7 +903,7 @@ class FldMapXmlParser(SihotXmlParser):
             return None
         return data
 
-    def end(self, tag: str) -> Optional[str]:
+    def end(self, tag: str) -> str | None:
         """ process end of XML element. """
         msg = f"FldMapXmlParser.end({tag}) "
         for col_field in self._collected_fields:
@@ -925,7 +934,7 @@ class ClientFromSihot(FldMapXmlParser):
 
     # XMLParser interface
 
-    def end(self, tag: str) -> Optional[str]:
+    def end(self, tag: str) -> str | None:
         """ process end of XML element. """
         if tag == 'GUEST-PROFILE':
             rec = self._rec.copy(deepness=-1)
@@ -943,7 +952,7 @@ class ResFromSihot(FldMapXmlParser):
 
     # XMLParser interface
 
-    def end(self, tag: str) -> Optional[str]:
+    def end(self, tag: str) -> str | None:
         """ process end of XML element. """
         if tag == 'RESERVATION':
             rec = complete_res_data(self._rec.copy(deepness=-1))
@@ -1030,7 +1039,7 @@ class ClientFetch(SihotXmlBuilder):
     def __init__(self, cae: ConsoleApp):
         super().__init__(cae, use_kernel=True)
 
-    def fetch_client(self, obj_id: str, field_names: Sequence = ()) -> Union[str, Record]:
+    def fetch_client(self, obj_id: str, field_names: Sequence = ()) -> str | Record:
         """ return Record with guest data OR str with error message in case of error. """
         self.beg_xml(operation_code='GUEST-GET')
         self.add_tag('GUEST-PROFILE', self.new_tag('OBJID', obj_id))
@@ -1048,6 +1057,7 @@ class ClientFetch(SihotXmlBuilder):
                 self.cae.dpo(f"fetch_client({obj_id}): multiple clients found: {recs}")
             rec = recs[0].copy(deepness=2, filter_fields=lambda f: f.name() not in field_names if field_names else None)
 
+        # noinspection PyTypeChecker
         return err_msg or rec
 
 
@@ -1062,7 +1072,7 @@ class ClientSearch(SihotXmlBuilder):
                        guest_no: str = '', email: str = '', guest_type: str = '',
                        flags: str = 'FIND-ALSO-DELETED-GUESTS', order_by: str = '', limit: int = 0,
                        field_names: tuple = ('ShId', ), **kwargs
-                       ) -> Union[str, list, Records]:
+                       ) -> str | list | Records:
         """ invoke the client search. """
         if kwargs:
             return f"ClientSearch.search_clients() does not support the argument(s)=\n{ppf(kwargs)}"
@@ -1137,7 +1147,7 @@ class ClientSearch(SihotXmlBuilder):
         return ret
     '''
 
-    def client_id_by_matchcode(self, matchcode: str) -> Optional[str]:
+    def client_id_by_matchcode(self, matchcode: str) -> str | None:
         """ determine client id for a client identified by its match code. """
         ids_or_err = self.search_clients(matchcode=matchcode)
         if isinstance(ids_or_err, str):
@@ -1147,6 +1157,7 @@ class ClientSearch(SihotXmlBuilder):
         if cnt > 1:
             self.cae.dpo(f"client_id_by_matchcode({matchcode}): multiple clients found")
         if cnt:
+            # noinspection PyTypeChecker
             return ids_or_err[0]
         return None
 
@@ -1155,7 +1166,7 @@ class ResFetch(SihotXmlBuilder):
     """ fetch reservation. """
     # pylint: disable=too-many-arguments,too-many-positional-arguments
     def fetch_res(self, ho_id: str, gds_no: str = '', res_id: str = '', sub_id: str = '', scope: str = 'USEISODATE'
-                  ) -> Union[str, Record]:
+                  ) -> str | Record:
         """ invoke request and fetch of reservation data. """
         self.beg_xml(operation_code='SS')
         self.add_tag('ID', ho_id)
@@ -1179,13 +1190,14 @@ class ResFetch(SihotXmlBuilder):
         if len(self.response.res_list) > 1:
             self.cae.dpo(f"fetch_res({self._xml}): multiple reservations found")
 
+        # noinspection PyTypeChecker
         return err_msg or self.response.res_list[0]
 
-    def fetch_by_gds_no(self, ho_id: str, gds_no: str, scope: str = 'USEISODATE') -> Union[str, Record]:
+    def fetch_by_gds_no(self, ho_id: str, gds_no: str, scope: str = 'USEISODATE') -> str | Record:
         """ fetch reservation identified by their GDS number. """
         return self.fetch_res(ho_id, gds_no=gds_no, scope=scope)
 
-    def fetch_by_res_id(self, ho_id: str, res_id: str, sub_id: str, scope: str = 'USEISODATE') -> Union[str, Record]:
+    def fetch_by_res_id(self, ho_id: str, res_id: str, sub_id: str, scope: str = 'USEISODATE') -> str | Record:
         """ fetch reservation identified by their reservation number and sub-number. """
         return self.fetch_res(ho_id, res_id=res_id, sub_id=sub_id, scope=scope)
 
@@ -1196,7 +1208,7 @@ class ResSearch(SihotXmlBuilder):
     def search_res(self, hotel_id: str = '',
                    from_date: datetime.date = datetime.date.today(), to_date: datetime.date = datetime.date.today(),
                    matchcode: str = '', name: str = '', gds_no: str = '',
-                   flags: str = '', scope: str = '', guest_id: str = '') -> Union[str, Records]:
+                   flags: str = '', scope: str = '', guest_id: str = '') -> str | Records:
         """ invoke search of reservation. """
         self.beg_xml(operation_code='RES-SEARCH')
         if hotel_id:
@@ -1244,7 +1256,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
 
         self.action = ''
         self._warning_frags = self.cae.get_variable('warningFragments') or []  # list of warning text fragments
-        self._warning_msgs: List[str] = []
+        self._warning_msgs: list[str] = []
 
     def get_warnings(self) -> str:
         """ get warning messages as concatenated string. """
@@ -1285,14 +1297,18 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 tag = tag[tag.rfind(ELEM_PATH_SEP) + 1:]
             idx = elem_map_item[MTI_FLD_NAME] if len(elem_map_item) > MTI_FLD_NAME else None
             if idx:
+                # noinspection PyTypeChecker
                 fld = rec.node_child(idx, use_curr_idx=Value((1, )))
                 if fld is None:
+                    # noinspection PyTypeChecker
                     fld = rec.node_child(idx)  # use template field
                     if fld is None:
                         continue        # skip xml creation for missing field (in current and template rec)
                 field = fld
+                # noinspection PyTypeChecker
                 idx_path = idx if isinstance(idx, (tuple, list)) else (field_name_idx_path(idx) or (idx, ))
                 val = rec.val(*idx_path, system=SDI_SH, direction=FAD_ONTO, use_curr_idx=Value((1, )))
+                # noinspection PyUnresolvedReferences
                 filter_fields = field.filterer(system=SDI_SH, direction=FAD_ONTO)
                 # finally not needed if clear_leaves() are called with reset_lists=False
                 # if not filter_fields and len(idx_path) >= 3 and isinstance(idx_path[1], int) and idx_path[1] > 0:
@@ -1308,6 +1324,7 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 filter_fields = elem_map_item[MTI_FLD_FILTER] if len(elem_map_item) > MTI_FLD_FILTER else None
             if filter_fields:
                 assert callable(filter_fields), f"filter aspect {filter_fields} has to be a callable"
+                # noinspection PyTypeChecker
                 if filter_fields(field):
                     continue
 
@@ -1322,7 +1339,8 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                         root_field = rec.node_child((nel[MTI_FLD_NAME][0], ))
                         if root_field:
                             recs = root_field.value()
-                            if isinstance(recs, LIST_TYPES):
+                            if is_type(recs, ListType):
+                                # noinspection PyTypeChecker,PyUnresolvedReferences
                                 set_current_index(recs, idx=recs.idx_min)
                                 group_i = map_i - 1
                             else:
@@ -1334,9 +1352,11 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 inner_xml += self.new_tag(tag[1:], opening=False) + "\n"
                 indent -= 1
                 if recs:
+                    # noinspection PyUnresolvedReferences,PyTypeChecker
                     if get_current_index(recs) >= len(recs) - 1:
                         recs = None
                     else:
+                        # noinspection PyTypeChecker
                         set_current_index(recs, add=1)
                         map_i = group_i     # jump back to begin of xml group
 
@@ -1406,6 +1426,7 @@ class ClientToSihot(FldMapXmlBuilder):
         if err_msg:
             self.cae.dpo(f"{msg}; err='{err_msg}'")
         else:
+            # noinspection PyUnresolvedReferences
             self.cae.vpo(f"{msg}; client={rec.val('AcuId')} RESPONDED OBJID={self.response.objid}"
                          f" MATCHCODE={self.response.matchcode}")
 
@@ -1418,7 +1439,7 @@ class ResToSihot(FldMapXmlBuilder):
         super().__init__(cae,
                          use_kernel=cae.get_option(SDF_SH_USE_KERNEL_FOR_RES),
                          elem_map=cae.get_variable(SDF_SH_RES_MAP) or SH_RES_MAP)
-        self._gds_errors: Dict[str, Tuple[Record, str]] = {}
+        self._gds_errors: dict[str, tuple[Record, str]] = {}
         self._in_error_handling = False
 
     def _add_sihot_configs(self, rec: Record):
@@ -1561,6 +1582,7 @@ class ResToSihot(FldMapXmlBuilder):
         # check occupants that are already registered (having a client reference)
         sent_clients = []
         if rec.val('ResPersons'):
+            # noinspection PyTypeChecker
             for occ_rec in rec.value('ResPersons', flex_sys_dir=True):
                 if occ_rec.val('PersAcuId'):
                     client = ClientToSihot(self.cae)
@@ -1585,7 +1607,7 @@ class ResToSihot(FldMapXmlBuilder):
     def send_res_to_sihot(self, rec: Record, ensure_client_mode: int = ECM_ENSURE_WITH_ERRORS) -> str:
         """ send reservation to Sihot system. """
         msg = "ResToSihot.send_res_to_sihot(): "
-        req_fields: Tuple[Union[str, Tuple[str, ...]], ...] = (
+        req_fields: tuple[str | tuple[str, ...], ...] = (
             'ResHotelId', ('ResGdsNo', 'ResId', 'ResObjId'), 'ResMktSegment', 'ResRoomCat', 'ResArrival',
             'ResDeparture')
         action = rec.val('ResAction')
@@ -1616,6 +1638,7 @@ class ResToSihot(FldMapXmlBuilder):
         if err_msg:
             self.cae.po(f"{msg}error={err_msg}; warnings={warn_msg}")
         else:
+            # noinspection PyUnresolvedReferences
             self.cae.dpo(f"{msg}GDSNO={gds_no} RESPONDED OBJID={self.response.objid}"
                          f" MATCHCODE={self.response.matchcode} warnings={warn_msg}")
 
@@ -1707,6 +1730,7 @@ class GuestBulkFetcher(BulkFetcherBase):
             print_exc()
             cae.shutdown(2130)
 
+        # noinspection PyTypeChecker
         return self.all_recs
 
 
@@ -1723,8 +1747,8 @@ class ResBulkFetcher(BulkFetcherBase):  # pylint: disable=too-many-instance-attr
         self.fetch_chunk_pause_seconds = 1
         self.search_flags = ''
         self.search_scope = ''
-        self.allowed_mkt_src: List[str] = []
-        self.allowed_mkt_grp: List[str] = []
+        self.allowed_mkt_src: list[str] = []
+        self.allowed_mkt_grp: list[str] = []
 
         self.adult_pers_types = ''
 
@@ -1787,12 +1811,13 @@ class ResBulkFetcher(BulkFetcherBase):  # pylint: disable=too-many-instance-attr
                                    max_los=self.max_length_of_stay,
                                    search_flags=self.search_flags, search_scope=self.search_scope,
                                    chunk_pause=self.fetch_chunk_pause_seconds)
+        # noinspection PyTypeChecker
         return self.all_recs
 
 
 class ResSender(ResToSihot):
     """ helper class to send reservation records to Sihot. """
-    def send_rec(self, rec: Record) -> Tuple[str, str]:
+    def send_rec(self, rec: Record) -> tuple[str, str]:
         """ send reservation record. """
         msg = ""
         try:
@@ -1817,4 +1842,5 @@ class ResSender(ResToSihot):
 
     def get_res_no(self) -> tuple:
         """ determine reservation number of sent reservation. """
+        # noinspection PyUnresolvedReferences
         return obj_id_to_res_no(self.cae, self.response.objid)

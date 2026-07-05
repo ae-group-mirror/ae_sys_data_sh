@@ -1,4 +1,4 @@
-# THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev.project_tpls v0.3.77
+# THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev.project_tpls v0.3.79
 """ setup of ae namespace module portion sys_data_sh: Sihot system data interface. """
 import sys
 # noinspection PyUnresolvedReferences
@@ -51,7 +51,6 @@ setup_kwargs = {
     'install_requires': [
         'ae_base',
         'ae_system',
-        'ae_parse_date',
         'ae_core',
         'ae_console',
         'ae_sys_data',
@@ -81,7 +80,7 @@ setup_kwargs = {
     },
     'python_requires': '>=3.12',
     'url': 'https://gitlab.com/ae-group/ae_sys_data_sh',
-    'version': '0.3.10',
+    'version': '0.3.11',
     'zip_safe': True,
 }
 
