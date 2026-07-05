@@ -1,12 +1,12 @@
-<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project ae.ae v0.3.103 -->
-<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev.namespace_root_tpls v0.3.22 -->
-# sys_data_sh 0.3.10
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project ae.ae v0.3.104 -->
+<!-- THIS FILE IS EXCLUSIVELY MAINTAINED by the project aedev.namespace_root_tpls v0.3.31 -->
+# sys_data_sh 0.3.11
 
 [![GitLab develop](https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/develop?logo=python)](
     https://gitlab.com/ae-group/ae_sys_data_sh)
 [![LatestPyPIrelease](
-    https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/release0.3.10?logo=python)](
-    https://gitlab.com/ae-group/ae_sys_data_sh/-/tree/release0.3.10)
+    https://img.shields.io/gitlab/pipeline/ae-group/ae_sys_data_sh/release0.3.11?logo=python)](
+    https://gitlab.com/ae-group/ae_sys_data_sh/-/tree/release0.3.11)
 [![PyPIVersions](https://img.shields.io/pypi/v/ae_sys_data_sh)](
     https://pypi.org/project/ae-sys-data-sh/#history)
 
@@ -35,8 +35,8 @@
     https://pypi.org/project/ae-sys-data-sh/#files)
 
 
-## installation
 
+## installation
 
 execute the following command to install the
 ae.sys_data_sh module
@@ -57,10 +57,14 @@ following command in the root folder of this repository
 pip install --editable .[dev]
 ```
 
-the last command will install this module portion, along with the tools you need
-to develop and run tests or to extend the portion documentation. to contribute only to the unit tests or to the
-documentation of this portion, replace the setup extras key `dev` in the above command with `tests` or `docs`
-respectively.
+this command installs this module portion project
+along with the necessary tools to modify the source code,
+run unit tests, and build documentation. to install only
+the dependencies required for a specific task,  replace
+`dev` with one of the following:
+
+    * `tests`: for contributing to the unit test suite
+    * `docs`: for maintaining and building documentation
 
 more detailed explanations on how to contribute to this project
 [are available here](
@@ -69,7 +73,9 @@ https://gitlab.com/ae-group/ae_sys_data_sh/-/blob/develop/CONTRIBUTING.rst)
 
 ## namespace portion documentation
 
-information on the features and usage of this portion are available at
+the documentation of the source code of this portion is available at
 [ReadTheDocs](
 https://ae.readthedocs.io/en/latest/_autosummary/ae.sys_data_sh.html
 "ae_sys_data_sh documentation").
+
+

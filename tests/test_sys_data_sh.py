@@ -30,6 +30,7 @@ def create_test_client(cons_app):
         col_values['GuestType'] = gt
         client.send_client_to_sihot(col_values)
     client.matchcode = mc     # added client attributes for easier testing
+    # noinspection PyUnresolvedReferences
     client.objid = client.response.objid
     client.surname = sn
     client.forename = fn
@@ -64,8 +65,8 @@ class TestResToSihot:
                           ResRates2RateDay=datetime.date(year=2019, month=12, day=28), ResRates2RateAmount='180.60',
                           AcuId='E578973',
                           )
-        err_msg = res_to.send_res_to_sihot(rec=Record(fields=fld_values), ensure_client_mode=ECM_DO_NOT_SEND_CLIENT)
-        # assert not err_msg
+        _err_msg = res_to.send_res_to_sihot(rec=Record(fields=fld_values), ensure_client_mode=ECM_DO_NOT_SEND_CLIENT)
+        # assert not _err_msg
         # assert not res_to.get_warnings()
 
 
@@ -169,10 +170,12 @@ class TestElemHelpers:
         d3 = d1 + datetime.timedelta(days=2)
         i = date_range_chunks(d1, d3, 2)
         beg, end = next(i)
+        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d1
         assert end == d1 + datetime.timedelta(days=1)
         beg, end = next(i)
+        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d3
         assert end == d3
@@ -180,10 +183,12 @@ class TestElemHelpers:
         d3 = d1 + datetime.timedelta(days=3)
         i = date_range_chunks(d1, d3, 2)
         beg, end = next(i)
+        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d1
         assert end == d1 + datetime.timedelta(days=1)
         beg, end = next(i)
+        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d3 - datetime.timedelta(days=1)
         assert end == d3
@@ -191,32 +196,32 @@ class TestElemHelpers:
 
 class TestIdConverters:
     def test_gds_no_to_obj_ids(self, cons_app):
-        ids = gds_no_to_ids(cons_app, '4', '899993')
-        # assert '60544' == ids['ResObjId']
-        # assert '33220' == ids['ResId']
-        # assert '1' == ids['ResSubId']
-        # assert 'ResSfId' in ids
-        # assert ids['ResSfId'] == ''
+        _ids = gds_no_to_ids(cons_app, '4', '899993')
+        # assert '60544' == _ids['ResObjId']
+        # assert '33220' == _ids['ResId']
+        # assert '1' == _ids['ResSubId']
+        # assert 'ResSfId' in _ids
+        # assert _ids['ResSfId'] == ''
 
     def test_res_no_to_obj_ids(self, cons_app):
-        ids = res_no_to_ids(cons_app, '4', '33220', '1')
-        # assert '60544' == ids['ResObjId']
-        # assert '899993' == ids['ResGdsNo']
-        # assert 'ResSfId' in ids
-        # assert ids['ResSfId'] == ''
+        _ids = res_no_to_ids(cons_app, '4', '33220', '1')
+        # assert '60544' == _ids['ResObjId']
+        # assert '899993' == _ids['ResGdsNo']
+        # assert 'ResSfId' in _ids
+        # assert _ids['ResSfId'] == ''
 
 
 class TestResSender:
     def test_create_all_fields(self, cons_app):
         ho_id = '3'
-        gdsno = 'TEST-1234567890'
+        gds_no = 'TEST-1234567890'
         today = datetime.date.today()
         wk1 = datetime.timedelta(days=7)
         cat = 'STDS'
 
         rs = ResSender(cons_app)
         row = dict(ResHotelId=ho_id, ResStatus='1', ResAction=ACTION_INSERT,
-                   ResGdsNo=gdsno, ResVoucherNo='Voucher1234567890',
+                   ResGdsNo=gds_no, ResVoucherNo='Voucher1234567890',
                    ResBooked=today, ResArrival=today + wk1, ResDeparture=today + wk1 + wk1,
                    ResRoomCat=cat, ResPriceCat=cat, ResRoomNo='3220',
                    ShId='27', AcuId='TCRENT',
@@ -239,22 +244,22 @@ class TestResSender:
         if "setDataRoom not available!" in err:     # no error only on first run after TEST replication
             row.pop('ResRoomNo')           # .. so on n. run simply remove room number and then retry
             rs.wipe_gds_errors()            # .. and also remove send locking by wiping GDS errors for this GDS
-            err, msg = rs.send_rec(Record(fields=row))
+            _err, _msg = rs.send_rec(Record(fields=row))
 
-        # assert not err
+        # assert not _err
         # assert ho_id == rs.response.id
         # assert isinstance(rs.response, ResResponse)
-        # assert gdsno == rs.response.gdsno
+        # assert gds_no == rs.response.gdsno
         # h, r, s, g = rs.get_res_no()
         # assert ho_id == h
         # assert r
         # assert s
         # assert '1' == s
-        # assert gdsno == g
+        # assert gds_no == g
 
     def test_create_minimum_fields_with_mc(self, cons_app):
         ho_id = '1'
-        gdsno = 'TEST-1234567890'
+        gds_no = 'TEST-1234567890'
         today = datetime.datetime.today()
         wk1 = datetime.timedelta(days=7)
         arr = today + wk1
@@ -264,24 +269,24 @@ class TestResSender:
 
         rs = ResSender(cons_app)
         row = dict(ResHotelId=ho_id, ResArrival=arr, ResDeparture=dep, ResRoomCat=cat, ResMktSegment=mkt_seg,
-                   AcuId='TCRENT', ResGdsNo=gdsno)
+                   AcuId='TCRENT', ResGdsNo=gds_no)
         rec = Record(fields=row, system=SDI_SH, direction=FAD_ONTO).add_system_fields(rs.elem_map)
-        err, msg = rs.send_rec(rec)
+        _err, _msg = rs.send_rec(rec)
 
-        # assert not err
+        # assert not _err
         # assert ho_id == rs.response.id
         # assert isinstance(rs.response, ResResponse)
-        # assert gdsno == rs.response.gdsno
+        # assert gds_no == rs.response.gdsno
         # h, r, s, g = rs.get_res_no()
         # assert ho_id == h
         # assert r
         # assert s
         # assert '1' == s
-        # assert gdsno == g
+        # assert gds_no == g
 
     def test_create_minimum_fields_with_objid(self, cons_app):
         ho_id = '1'
-        gdsno = 'TEST-1234567890'
+        gds_no = 'TEST-1234567890'
         today = datetime.datetime.today()
         wk1 = datetime.timedelta(days=7)
         arr = today + wk1
@@ -291,19 +296,19 @@ class TestResSender:
 
         rs = ResSender(cons_app)
         row = dict(ResHotelId=ho_id, ResArrival=arr, ResDeparture=dep, ResRoomCat=cat, ResMktSegment=mkt_seg,
-                   ShId='27', ResGdsNo=gdsno)
-        err, msg = rs.send_rec(Record(fields=row))
+                   ShId='27', ResGdsNo=gds_no)
+        _err, _msg = rs.send_rec(Record(fields=row))
 
-        # assert not err
+        # assert not _err
         # assert ho_id == rs.response.id
         # assert isinstance(rs.response, ResResponse)
-        # assert gdsno == rs.response.gdsno
+        # assert gds_no == rs.response.gdsno
         # h, r, s, g = rs.get_res_no()
         # assert ho_id == h
         # assert r
         # assert s
         # assert '1' == s
-        # assert gdsno == g
+        # assert gds_no == g
 
 
 class TestClientFromSihot:
@@ -561,8 +566,8 @@ class TestClientToSihot:
         fld_values = dict(AcuId='T111222', Title='1', GuestType='1', Country='AT', Language='DE',
                           ExtRefs='RCI=123,XXX=456')
         rec = Record(fields=fld_values)
-        err_msg = cli_to.send_client_to_sihot(rec=rec)
-        # assert not err_msg
+        _err_msg = cli_to.send_client_to_sihot(rec=rec)
+        # assert not _err_msg
         # assert cli_to.response.objid
         # assert cli_to.response.objid == rec.val('ShId')
 
@@ -571,7 +576,7 @@ class TestClientFetchSearch:
     def test_client_with_10_ext_refs(self, client_search, cons_app):
         objid = client_search.client_id_by_matchcode('E396693')
         assert objid
-        ret = ClientFetch(cons_app).fetch_client(objid)
+        _ret = ClientFetch(cons_app).fetch_client(objid)
         # assert isinstance(ret, dict)
         # assert ret['MATCH-ADM'] == '4806-00208'
         # if ret['COMMENT']:
@@ -580,8 +585,8 @@ class TestClientFetchSearch:
         #     assert 'RCI=5-207931' in ret['COMMENT']     # RCIP got remapped to RCI
 
     def test_get_obj_ids_by_client_names(self, client_search):
-        obj_ids = client_search.search_clients(surname='OTS Open Travel Services AG')
-        obj_id = client_search.client_id_by_matchcode('OTS')
+        _obj_ids = client_search.search_clients(surname='OTS Open Travel Services AG')
+        _obj_id = client_search.client_id_by_matchcode('OTS')
         # assert obj_id in obj_ids
         # obj_ids = client_search.search_clients(surname='Sumar Ferdir')
         # obj_id = client_search.client_id_by_matchcode('SF')
@@ -594,19 +599,20 @@ class TestClientFetchSearch:
         # assert obj_id in obj_ids
 
     def test_get_obj_ids_by_email(self, client_search):
-        obj_ids = client_search.search_clients(email='info@opentravelservice.com')
-        obj_id = client_search.client_id_by_matchcode('OTS')
+        _obj_ids = client_search.search_clients(email='info@opentravelservice.com')
+        _obj_id = client_search.client_id_by_matchcode('OTS')
 
     def test_search_agencies(self, client_search):
-        ags = client_search.search_clients(guest_type='7')     # 1=Guest, 7=Company (wrong documented in KERNEL PDF)
+        _ags = client_search.search_clients(guest_type='7')     # 1=Guest, 7=Company (wrong documented in KERNEL PDF)
         # assert [_ for _ in ags if _ == '69']
         # assert [_ for _ in ags if _ == '100']
         # assert [_ for _ in ags if _ == '20']
         # assert [_ for _ in ags if _ == '27']
 
-        ags = client_search.search_clients(guest_type='7', field_names=('AcuId', 'ShId'))
+        _ags = client_search.search_clients(guest_type='7', field_names=('AcuId', 'ShId'))
         # assert isinstance(ags, Records)
         # assert [_ for _ in ags if _['AcuId'] == 'OTS' and _['ShId'] == '69']
         # assert [_ for _ in ags if _['AcuId'] == 'SF' and _['ShId'] == '100']
         # assert [_ for _ in ags if _['AcuId'] == 'TCAG' and _['ShId'] == '20']
+
         # assert [_ for _ in ags if _['AcuId'] == 'TCRENT' and _['ShId'] == '27']
