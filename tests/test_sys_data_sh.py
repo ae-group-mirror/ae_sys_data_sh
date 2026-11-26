@@ -170,12 +170,10 @@ class TestElemHelpers:
         d3 = d1 + datetime.timedelta(days=2)
         i = date_range_chunks(d1, d3, 2)
         beg, end = next(i)
-        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d1
         assert end == d1 + datetime.timedelta(days=1)
         beg, end = next(i)
-        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d3
         assert end == d3
@@ -183,12 +181,10 @@ class TestElemHelpers:
         d3 = d1 + datetime.timedelta(days=3)
         i = date_range_chunks(d1, d3, 2)
         beg, end = next(i)
-        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d1
         assert end == d1 + datetime.timedelta(days=1)
         beg, end = next(i)
-        # noinspection PyStringConversionWithoutDunderMethod
         print(beg, end)
         assert beg == d3 - datetime.timedelta(days=1)
         assert end == d3
