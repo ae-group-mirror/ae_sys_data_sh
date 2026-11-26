@@ -43,7 +43,7 @@ from ae.sys_core_sh import (ResKernelGet, ResResponse, SihotXmlParser, SihotXmlB
                             SDF_SH_CLIENT_MAP, SDF_SH_RES_MAP)
 
 
-__version__ = '0.3.11'
+__version__ = '0.3.12'
 
 
 FORE_SURNAME_SEP = ' '
@@ -177,7 +177,7 @@ SH_RES_MAP = \
         ('SIHOT-Document' + ELEM_PATH_SEP + 'ID', 'ResHotelId'),  # [RES-]HOTEL/IDLIST/MANDATOR-NO/EXTERNAL-SYSTEM-ID
         ('ARESLIST/', ),
         ('RESERVATION/', ),
-        # ### main reservation info: orderer, status, external booking references, room/price category, ...
+        # ### main reservation info: orderer, status, external booking references, room/price category
         ('RESERVATION' + ELEM_PATH_SEP + 'RES-HOTEL', 'ResHotelId'),
         ('RESERVATION' + ELEM_PATH_SEP + 'RES-NR', 'ResId', None,
          lambda f: not f.val()),
@@ -192,8 +192,8 @@ SH_RES_MAP = \
         # MATCHCODE/GUEST-ID needed for DELETE action to prevent Sihot error:
         # .. "Could not find a key identifier for the client (name, matchcode, ...)"
         # ('GUEST-ID', 'ShId', None,
-        #  lambda f: not f.rfv('ShId')},
-        ('RESERVATION' + ELEM_PATH_SEP + 'GUEST-ID', 'ShId'),   # , None, lambda f: not f.val()),
+        #  lambda f: not f.rfv('ShId'),
+        ('RESERVATION' + ELEM_PATH_SEP + 'GUEST-ID', 'ShId'),   # +arguments: None, lambda f: not f.val()
         # GUEST-OBJID used in SS/RES-SEARCH responses instead of GUEST-ID for parsing orderer - always hide in XML build
         ('RESERVATION' + ELEM_PATH_SEP + 'GUEST-OBJID', 'ShId'),
         ('RESERVATION' + ELEM_PATH_SEP + 'MATCHCODE', 'AcuId'),
@@ -506,13 +506,13 @@ def complete_res_data(rec: Record) -> Record:   # pylint: disable=too-many-local
         :return:        completed reservation data Record instance.
 
         un-changed fields:
-            ResRoomNo, ResNote, ResLongNote, ResFlightArrComment (flight no...), ResAllotmentNo, ResVoucherNo.
+            ResRoomNo, ResNote, ResLongNote, ResFlightArrComment (flight no), ResAllotmentNo, ResVoucherNo.
         mandatory fields:
             ShId or AcuId or Surname (to specify the orderer of the reservation), ResHotelId, ResArrival, ResDeparture,
             ResRoomCat, ResMktSegment, ResGdsNo, ResAdults, ResChildren.
         optional fields:
             ResPersons0PersSurname and ResPersons0PersForename (surname and forename)
-            ResPersons1PersSurname and ResPersons1PersForename ( ... )
+            ResPersons1PersSurname and ResPersons1PersForename
         optional autopopulated fields:
             see the default values - specified in default_values dict underneath.
         """
@@ -896,7 +896,7 @@ class FldMapXmlParser(SihotXmlParser):
         return tag
 
     def data(self, data: str) -> str | None:
-        """ process data of xml element. """
+        """ process data of XML element. """
         super().data(data)
         if self._collected_fields:
             self._current_data += data
@@ -1352,11 +1352,9 @@ class FldMapXmlBuilder(SihotXmlBuilder):
                 inner_xml += self.new_tag(tag[1:], opening=False) + "\n"
                 indent -= 1
                 if recs:
-                    # noinspection PyUnresolvedReferences,PyTypeChecker
                     if get_current_index(recs) >= len(recs) - 1:
                         recs = None
                     else:
-                        # noinspection PyTypeChecker
                         set_current_index(recs, add=1)
                         map_i = group_i     # jump back to begin of xml group
 
